@@ -1,0 +1,6 @@
+{
+  "name": "Base: strategic warfare",
+  "description": "Live satellite world map tactical overview with live UTC game time and treasury floating status.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
