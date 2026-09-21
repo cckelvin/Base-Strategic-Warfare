@@ -79,7 +79,7 @@ body,
   cursor: crosshair !important;
 }
 
-/* Realistic Military Base Marker Styling */
+/* Pentagon Military Base Marker Styling */
 .military-base-marker-icon {
   background: transparent !important;
   border: none !important;
@@ -91,7 +91,7 @@ body,
 
 .military-base-pin:hover {
   transform: scale(1.22);
-  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9));
 }
 
 @keyframes base-beacon {
@@ -102,5 +102,20 @@ body,
 .animate-base-beacon {
   animation: base-beacon 2.4s cubic-bezier(0.25, 1, 0.5, 1) infinite;
 }
+
+/* Camo Red Tactical Pattern for Long Circle-Edged Military Button - Brightened & Less Dark */
+.camo-darkred-bg,
+.camo-crimson-bg {
+  background-color: #b91c1c;
+  background-image:
+    radial-gradient(ellipse at 18% 28%, #dc2626 40%, transparent 41%),
+    radial-gradient(ellipse at 78% 22%, #991b1b 36%, transparent 37%),
+    radial-gradient(ellipse at 46% 74%, #ef4444 32%, transparent 33%),
+    radial-gradient(ellipse at 88% 78%, #7f1d1d 38%, transparent 39%),
+    radial-gradient(ellipse at 52% 42%, #b91c1c 30%, transparent 31%);
+  background-size: 70px 70px;
+}
+
+
 
 

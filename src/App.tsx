@@ -14,10 +14,18 @@ import {
   Crosshair,
   MapPin,
   Copy,
+  Building2,
 } from 'lucide-react';
 import { COUNTRIES, CountryFlag } from './countries';
 import { MILITARY_BASES, MilitaryBase } from './militaryBases';
 import BaseModal from './BaseModal';
+import UserInfoModal from './UserInfoModal';
+import SplashScreen from './SplashScreen';
+import FloatingNewsTab from './FloatingNewsTab';
+import NotificationsModal from './NotificationsModal';
+import CitiesModal from './CitiesModal';
+import { INITIAL_NOTIFICATIONS, NotificationCategory, NotificationItem } from './notificationsData';
+
 
 // Formats coordinates to DMS and Decimal string
 function formatCoordinates(lat: number, lng: number) {
@@ -71,7 +79,30 @@ export default function App() {
     return COUNTRIES[0];
   });
 
+  // Full-page user info modal when country flag is clicked
+  const [isUserInfoOpen, setIsUserInfoOpen] = useState(false);
   const [isCountryPickerOpen, setIsCountryPickerOpen] = useState(false);
+
+  // 3-second heavy graphics splash screen state
+  const [showSplash, setShowSplash] = useState(true);
+
+  // News and notifications state
+  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [isNewsCollapsed, setIsNewsCollapsed] = useState(false);
+  const [isNotificationsPageOpen, setIsNotificationsPageOpen] = useState(false);
+  const [selectedNotificationCategory, setSelectedNotificationCategory] = useState<NotificationCategory | undefined>(undefined);
+
+  // Strategic Cities modal state
+  const [isCitiesModalOpen, setIsCitiesModalOpen] = useState(false);
+
+  // Fly map camera to a city coordinate
+  const handleFlyToCity = (lat: number, lng: number, _name: string) => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([lat, lng], 6, {
+        duration: 1.8,
+      });
+    }
+  };
 
   // Money state with customizable starting treasury (persisted to prevent resets)
   const [money, setMoney] = useState<number>(() => {
@@ -261,7 +292,7 @@ export default function App() {
     pinMarkerRef.current = marker;
   };
 
-  // Helper to create a realistic, refined military base icon (tiny on map but clear, tactical, not too tiny)
+  // Helper to create a realistic pentagon building military base icon (tiny on map but clear, pentagon building architecture)
   const createMilitaryBaseIcon = (base: MilitaryBase) => {
     return L.divIcon({
       className: 'military-base-marker-icon',
@@ -269,22 +300,27 @@ export default function App() {
       iconAnchor: [14, 14],
       html: `
         <div class="relative w-7 h-7 flex items-center justify-center cursor-pointer military-base-pin" title="${base.name} (${base.countryName})">
-          <!-- Subtle radar beacon ring -->
+          <!-- Subtle radar beacon ring radiating from fortress -->
           <div class="absolute inset-0 rounded-full border border-amber-400/80 animate-base-beacon pointer-events-none"></div>
 
-          <!-- Outer tactical ring -->
-          <div class="w-6 h-6 rounded-full bg-zinc-950/90 border-2 border-amber-500 flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
-            <!-- Realistic military radar/fortress silhouette SVG -->
-            <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <!-- Strategic Fortress / Radar Outpost emblem -->
-              <path d="M12 2L3 7v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5z" fill="rgba(245, 158, 11, 0.25)"/>
-              <circle cx="12" cy="11" r="2.5" fill="#f59e0b" stroke="none" />
-              <path d="M12 6v2M12 14v2M7 11h2M15 11h2"/>
-            </svg>
-          </div>
+          <!-- Pentagon Building Architecture SVG Marker -->
+          <svg class="w-6 h-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Pentagon Outer Wall Ring -->
+            <polygon points="50,4 96,37 79,90 21,90 4,37" fill="#09090b" stroke="#f59e0b" stroke-width="4.5" stroke-linejoin="round"/>
+            
+            <!-- Concentric Pentagon Corridors (Pentagon building rings) -->
+            <polygon points="50,15 85,41 72,81 28,81 15,41" fill="#18181b" stroke="#d97706" stroke-width="2.5" stroke-linejoin="round"/>
+            <polygon points="50,26 74,44 65,72 35,72 26,44" fill="#27272a" stroke="#b45309" stroke-width="2" stroke-linejoin="round"/>
+            
+            <!-- Pentagon Central Courtyard / Command Hub -->
+            <polygon points="50,38 63,48 58,63 42,63 37,48" fill="#f59e0b" stroke="#78350f" stroke-width="1.5" stroke-linejoin="round"/>
+            
+            <!-- Center Tactical Beacon Core -->
+            <circle cx="50" cy="53" r="3.5" fill="#fef08a" />
+          </svg>
 
-          <!-- Micro country ownership pip -->
-          <div class="absolute -top-0.5 -right-0.5 w-3 h-2 rounded-[1px] border border-black overflow-hidden shadow">
+          <!-- Micro country ownership flag pip -->
+          <div class="absolute -top-1 -right-1 w-3.5 h-2.5 rounded-[2px] border border-black overflow-hidden shadow-md">
             <img src="${base.flagUrl}" class="w-full h-full object-cover" alt="" />
           </div>
         </div>
@@ -349,13 +385,6 @@ export default function App() {
         updateWhenIdle: true,
       }
     ).addTo(map);
-
-    // Add zoom control at bottom right (above military button)
-    L.control
-      .zoom({
-        position: 'bottomright',
-      })
-      .addTo(map);
 
     // Place realistic military base icons in requested locations
     MILITARY_BASES.forEach((base) => {
@@ -456,14 +485,14 @@ export default function App() {
         id="top-left-status-cluster"
         className="fixed top-3.5 left-3.5 z-50 flex items-center gap-2"
       >
-        {/* Circular Button with Country Flag on it */}
+        {/* Circular Button with Country Flag on it (Clicking opens Full-Page User Info Modal) */}
         <div className="relative">
           <button
             id="country-flag-btn"
-            onClick={() => setIsCountryPickerOpen(!isCountryPickerOpen)}
-            title={`Selected Nation: ${selectedCountry.name} (Click to change)`}
+            onClick={() => setIsUserInfoOpen(true)}
+            title={`Commander Profile: ${selectedCountry.name} (Click to open Commander Terminal)`}
             aria-label={`Nation Flag: ${selectedCountry.name}`}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border-2 border-zinc-700/80 hover:border-amber-400/80 shadow-2xl backdrop-blur-md overflow-hidden transition-all duration-200 cursor-pointer active:scale-95 group"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border-2 border-zinc-700/80 hover:border-red-500 shadow-2xl backdrop-blur-md overflow-hidden transition-all duration-200 cursor-pointer active:scale-95 group"
           >
             <img
               src={selectedCountry.flagUrl}
@@ -472,37 +501,6 @@ export default function App() {
               referrerPolicy="no-referrer"
             />
           </button>
-
-          {/* Quick country selection dropdown */}
-          {isCountryPickerOpen && (
-            <div
-              id="country-picker-dropdown"
-              className="absolute top-12 left-0 w-52 max-h-64 overflow-y-auto bg-zinc-950/95 border border-zinc-700/80 rounded-xl p-1.5 shadow-2xl backdrop-blur-md z-50 flex flex-col gap-1"
-            >
-              <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-400 border-b border-zinc-800">
-                Select Base Country
-              </div>
-              {COUNTRIES.map((country) => (
-                <button
-                  key={country.code}
-                  onClick={() => handleSelectCountry(country)}
-                  className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left text-xs transition-colors cursor-pointer ${
-                    selectedCountry.code === country.code
-                      ? 'bg-amber-500/20 text-amber-300 font-medium'
-                      : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-white'
-                  }`}
-                >
-                  <img
-                    src={country.flagUrl}
-                    alt={country.name}
-                    className="w-5 h-3.5 object-cover rounded-xs"
-                    referrerPolicy="no-referrer"
-                  />
-                  <span className="truncate">{country.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Shorter Floating Tab: Money */}
@@ -636,51 +634,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Permanent Planet Coordinate Display Badge if pinned (with quick copy button) */}
-      {pinnedCoord && !isPinpointActive && (
-        <div
-          id="pinned-coord-badge"
-          className="fixed bottom-4 left-4 z-40 flex items-center gap-2 px-3 py-1.5 bg-zinc-950/90 border border-amber-500/40 hover:border-amber-400 rounded-lg text-xs font-mono backdrop-blur-md shadow-xl text-zinc-300 transition-colors"
-        >
-          <button
-            onClick={() => {
-              if (mapInstanceRef.current) {
-                mapInstanceRef.current.flyTo([pinnedCoord.lat, pinnedCoord.lng], 7, {
-                  duration: 1.5,
-                });
-                pinMarkerRef.current?.openPopup();
-              }
-            }}
-            title="Focus map on coordinate"
-            className="flex items-center gap-1.5 hover:text-amber-300 cursor-pointer"
-          >
-            <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="text-[10px] text-zinc-400 uppercase tracking-widest">
-              Planet Coord:
-            </span>
-            <span className="text-amber-400 font-bold tabular-nums">
-              {pinnedCoord.lat.toFixed(4)}°, {pinnedCoord.lng.toFixed(4)}°
-            </span>
-          </button>
-
-          <span className="text-zinc-700">|</span>
-
-          <button
-            id="copy-pinned-coord-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCopyCoordinate();
-            }}
-            title="Copy coordinates to clipboard"
-            aria-label="Copy coordinates"
-            className="flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-zinc-300 transition-colors cursor-pointer"
-          >
-            <Copy className="w-3 h-3" />
-            <span className="font-semibold">COPY</span>
-          </button>
-        </div>
-      )}
-
       {/* RIGHT EDGE CONTROLS: Tiny compass icon button above military */}
       <div
         id="right-edge-controls"
@@ -710,29 +663,86 @@ export default function App() {
         </button>
       </div>
 
-      {/* BOTTOM RIGHT CORNER: Military Button (circular floating camo color button with military text, triggers Coming Soon if clicked) */}
+      {/* BOTTOM LEFT: Big Floating Tab (taller than wider, expandable/collapsible with a white > icon) */}
+      <FloatingNewsTab
+        notifications={notifications}
+        isCollapsed={isNewsCollapsed}
+        onToggleCollapse={() => setIsNewsCollapsed(!isNewsCollapsed)}
+        onOpenFullNotifications={(category) => {
+          setSelectedNotificationCategory(category);
+          setIsNotificationsPageOpen(true);
+        }}
+        extraCollapsedActions={
+          /* CITIES BUTTON: ONLY shown when notification update floating tab is collapsed */
+          <button
+            id="cities-bottom-left-btn"
+            onClick={() => setIsCitiesModalOpen(true)}
+            title="Strategic World Megacity Hubs"
+            aria-label="Strategic Megacities"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-cyan-950/95 hover:bg-cyan-900 border border-cyan-500/80 hover:border-cyan-400 text-cyan-200 hover:text-white shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer active:scale-95 group font-mono"
+          >
+            <div className="w-5 h-5 rounded-md bg-cyan-900/80 border border-cyan-500/50 flex items-center justify-center text-cyan-300 group-hover:text-white">
+              <Building2 className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider">CITIES</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-cyan-800/80 text-[10px] text-cyan-300 border border-cyan-600/50">
+              12
+            </span>
+          </button>
+        }
+      />
+
+      {/* BOTTOM RIGHT CORNER: Military Button (bigger, less dark, tactical crimson camo with bold white text) */}
       <div id="bottom-right-military-container" className="fixed right-4 bottom-4 z-50">
         <button
           id="military-btn"
           type="button"
           onClick={() => showComingSoon('Global Military Command')}
-          aria-label="Military"
+          aria-label="Military Command"
           title="Military Command"
-          className="relative flex items-center justify-center w-16 h-16 rounded-full camo-bg border-2 border-emerald-900/90 shadow-[0_10px_25px_-3px_rgba(0,0,0,0.8),0_0_15px_rgba(46,58,36,0.5)] transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer overflow-hidden group"
+          className="relative flex items-center justify-center px-12 py-4.5 sm:py-5 min-w-[210px] rounded-full camo-crimson-bg border-2 border-red-400/90 shadow-[0_10px_35px_-3px_rgba(220,38,38,0.7),0_0_25px_rgba(239,68,68,0.45)] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer overflow-hidden group tracking-wider"
         >
-          {/* Subtle camo tactical ring texture */}
-          <div className="absolute inset-0 rounded-full bg-black/25 group-hover:bg-black/10 transition-colors" />
-          <div className="absolute inset-1 rounded-full border border-emerald-300/20" />
+          {/* Subtle camo tactical bright gloss overlay */}
+          <div className="absolute inset-0 rounded-full bg-black/15 group-hover:bg-black/5 transition-colors" />
+          <div className="absolute inset-1 rounded-full border border-red-200/40" />
 
-          {/* Stenciled Military Text */}
+          {/* Stenciled Bold White Military Text */}
           <span
             id="military-btn-text"
-            className="relative text-[10px] font-black tracking-widest text-emerald-100 uppercase font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+            className="relative text-sm sm:text-base font-black tracking-widest text-white uppercase font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
           >
             MILITARY
           </span>
         </button>
       </div>
+
+      {/* FULL PAGE NOTIFICATIONS PAGE: Emerges when clicking news floating tab, divided into categories */}
+      {isNotificationsPageOpen && (
+        <NotificationsModal
+          initialCategory={selectedNotificationCategory}
+          onClose={() => setIsNotificationsPageOpen(false)}
+          onShowComingSoon={showComingSoon}
+        />
+      )}
+
+      {/* STRATEGIC CITIES MODAL: Emerges when clicking CITIES button */}
+      {isCitiesModalOpen && (
+        <CitiesModal
+          onClose={() => setIsCitiesModalOpen(false)}
+          onFlyToCity={handleFlyToCity}
+          onShowComingSoon={showComingSoon}
+        />
+      )}
+
+      {/* FULL PAGE USER INFO MODAL: Emerges when user taps the country flag button */}
+      {isUserInfoOpen && (
+        <UserInfoModal
+          country={selectedCountry}
+          onSelectCountry={handleSelectCountry}
+          onClose={() => setIsUserInfoOpen(false)}
+          onShowComingSoon={showComingSoon}
+        />
+      )}
 
       {/* FULL PAGE BASE MODAL: Emerges when a military base on map is clicked */}
       {selectedBase && (
@@ -742,6 +752,9 @@ export default function App() {
           onShowComingSoon={showComingSoon}
         />
       )}
+
+      {/* 3-SECOND HEAVY GRAPHICS SPLASH SCREEN WITH MOVING MILITARY & ECONOMIC VALUE ANIMATIONS */}
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
     </main>
   );
 }
