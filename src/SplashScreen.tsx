@@ -27,7 +27,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   useEffect(() => {
     const startTime = Date.now();
-    const duration = 3000; // 3 seconds strictly as requested
+    const duration = 5000; // 5 seconds strictly as requested
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -43,13 +43,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       }
 
       if (elapsed >= duration) {
+        setProgress(100);
         clearInterval(interval);
         setFading(true);
         setTimeout(() => {
           onComplete();
-        }, 450); // smooth cinematic fade into main game
+        }, 300); // smooth transition when reaching 100%
       }
-    }, 40);
+    }, 30);
 
     return () => clearInterval(interval);
   }, [onComplete]);
@@ -130,13 +131,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       {/* =========================================================================
           TOP HEADER: STUDIO & SKIP ACTION
          ========================================================================= */}
-      <div className="relative z-30 flex items-center justify-between p-6 sm:p-8">
+      <div className="relative z-30 flex items-center justify-between p-4 sm:p-6 md:p-8 shrink-0">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-red-600/30 border border-red-500/60 text-red-400 font-mono text-xs font-black">
+          <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-red-600/30 border border-red-500/60 text-red-400 font-mono text-xs font-black">
             B
           </span>
-          <span className="text-[11px] font-mono tracking-widest uppercase text-zinc-300 font-bold drop-shadow">
-            DOMINATIONS WARFARE ENGINE
+          <span className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-zinc-300 font-bold drop-shadow">
+            DOMINATIONS WAR ENGINE
           </span>
         </div>
 
@@ -145,55 +146,55 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             setFading(true);
             setTimeout(onComplete, 250);
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/90 border border-amber-500/40 text-[11px] font-mono font-bold tracking-wider text-amber-300 hover:text-white transition-all cursor-pointer shadow-lg backdrop-blur-md"
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/60 hover:bg-black/90 border border-amber-500/40 text-[10px] sm:text-[11px] font-mono font-bold tracking-wider text-amber-300 hover:text-white transition-all cursor-pointer shadow-lg backdrop-blur-md"
         >
           <span>SKIP</span>
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         </button>
       </div>
 
       {/* =========================================================================
           CENTER HERO: DOMINATIONS-STYLE METALLIC GAME TITLE PLATE & EMBLEM
          ========================================================================= */}
-      <div className="relative z-30 my-auto flex flex-col items-center justify-center text-center px-4">
+      <div className="relative z-30 my-auto flex flex-col items-center justify-center text-center px-4 py-2">
         {/* Golden Military Crest Stars & Crossed Accents */}
-        <div className="flex items-center gap-2 mb-2">
-          <span className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent via-amber-400 to-amber-500" />
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+          <span className="h-px w-6 sm:w-16 bg-gradient-to-r from-transparent via-amber-400 to-amber-500" />
           <div className="flex items-center gap-1 text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="text-[10px] sm:text-xs font-mono font-black tracking-[0.3em] uppercase">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[9px] sm:text-xs font-mono font-black tracking-[0.2em] sm:tracking-[0.3em] uppercase">
               WORLD CONQUEST MMO
             </span>
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </div>
-          <span className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent via-amber-400 to-amber-500" />
+          <span className="h-px w-6 sm:w-16 bg-gradient-to-l from-transparent via-amber-400 to-amber-500" />
         </div>
 
         {/* Big Game Title - Bold 3D Metallic / Gold Emboss styling */}
         <div className="relative">
-          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter uppercase font-serif drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)]">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter uppercase font-serif drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)] leading-tight">
             <span className="bg-gradient-to-b from-amber-100 via-amber-300 to-amber-600 bg-clip-text text-transparent">
               BASE
             </span>
           </h1>
 
-          <div className="text-lg sm:text-2xl md:text-3xl font-mono font-black tracking-[0.35em] text-red-500 uppercase drop-shadow-[0_2px_10px_rgba(239,68,68,0.9)] -mt-2">
+          <div className="text-xs sm:text-lg md:text-2xl font-mono font-black tracking-[0.2em] sm:tracking-[0.35em] text-red-500 uppercase drop-shadow-[0_2px_10px_rgba(239,68,68,0.9)] -mt-1 sm:-mt-2">
             STRATEGIC WARFARE
           </div>
         </div>
 
         {/* Visual asset indicators pill (Troops • Oil Rigs • Missiles) */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-mono font-bold">
-          <span className="px-3 py-1 rounded-full bg-red-950/80 border border-red-500/60 text-red-300 shadow-md flex items-center gap-1.5">
-            <Crosshair className="w-3.5 h-3.5 text-red-400" />
+        <div className="mt-3 sm:mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 text-[9px] sm:text-xs font-mono font-bold">
+          <span className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-red-950/80 border border-red-500/60 text-red-300 shadow-md flex items-center gap-1 sm:gap-1.5">
+            <Crosshair className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-400" />
             GROUND TROOPS
           </span>
-          <span className="px-3 py-1 rounded-full bg-amber-950/80 border border-amber-500/60 text-amber-300 shadow-md flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
+          <span className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-amber-950/80 border border-amber-500/60 text-amber-300 shadow-md flex items-center gap-1 sm:gap-1.5">
+            <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
             OFFSHORE OIL RIGS
           </span>
-          <span className="px-3 py-1 rounded-full bg-blue-950/80 border border-blue-500/60 text-blue-300 shadow-md flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-blue-400" />
+          <span className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-blue-950/80 border border-blue-500/60 text-blue-300 shadow-md flex items-center gap-1 sm:gap-1.5">
+            <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400" />
             BALLISTIC MISSILES
           </span>
         </div>
@@ -202,22 +203,22 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       {/* =========================================================================
           BOTTOM FOOTER: GAME TIPS & HEAVY GAME LOADING PROGRESS BAR
          ========================================================================= */}
-      <div className="relative z-30 w-full max-w-2xl mx-auto px-6 pb-8 sm:pb-12 flex flex-col gap-3">
+      <div className="relative z-30 w-full max-w-2xl mx-auto px-4 pb-4 sm:px-6 sm:pb-8 flex flex-col gap-2 sm:gap-3 shrink-0">
         {/* Mobile Strategy Game Gameplay Tip */}
-        <div className="p-3 rounded-xl bg-black/75 border border-zinc-700/80 backdrop-blur-md shadow-2xl flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 shrink-0">
-            <Shield className="w-4 h-4 animate-pulse" />
+        <div className="p-2 sm:p-3 rounded-xl bg-black/75 border border-zinc-700/80 backdrop-blur-md shadow-2xl flex items-center gap-2.5 sm:gap-3">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 shrink-0">
+            <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-pulse" />
           </div>
-          <p className="text-xs font-mono text-zinc-300 line-clamp-2 leading-relaxed tracking-wide">
+          <p className="text-[10px] sm:text-xs font-mono text-zinc-300 line-clamp-2 leading-relaxed tracking-wide">
             {GAME_TIPS[tipIndex]}
           </p>
         </div>
 
         {/* Loading Progress Info & Percentage */}
-        <div className="flex items-center justify-between text-xs font-mono font-bold text-amber-300">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span className="tracking-widest uppercase">
+        <div className="flex items-center justify-between text-[10px] sm:text-xs font-mono font-bold text-amber-300">
+          <div className="flex items-center gap-1.5 sm:gap-2 truncate mr-2">
+            <span className="inline-block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+            <span className="tracking-wider uppercase truncate">
               {progress < 35
                 ? 'MARSHALING ARMORED DIVISIONS & COMBAT TROOPS...'
                 : progress < 70
@@ -225,13 +226,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 : 'SYNCHRONIZING BALLISTIC MISSILE SILOS...'}
             </span>
           </div>
-          <span className="tabular-nums tracking-widest text-sm text-amber-400">
+          <span className="tabular-nums tracking-widest text-xs sm:text-sm text-amber-400 shrink-0">
             {progress}%
           </span>
         </div>
 
         {/* Ornate DomiNations-style Heavy Game Loading Bar with Gold/Crimson Glow */}
-        <div className="relative w-full h-4 sm:h-5 rounded-full p-0.5 bg-black/90 border-2 border-amber-500/70 shadow-[0_0_20px_rgba(245,158,11,0.4)] overflow-hidden">
+        <div className="relative w-full h-3 sm:h-4 sm:h-5 rounded-full p-0.5 bg-black/90 border-2 border-amber-500/70 shadow-[0_0_20px_rgba(245,158,11,0.4)] overflow-hidden">
           {/* Inner animated gradient bar */}
           <div
             className="h-full rounded-full bg-gradient-to-r from-red-600 via-amber-500 to-yellow-300 transition-all duration-75 ease-out shadow-[0_0_15px_rgba(234,179,8,0.9)] relative overflow-hidden"
@@ -245,8 +246,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         </div>
 
         {/* Tiny footer label */}
-        <div className="text-center text-[10px] font-mono text-zinc-400 tracking-wider">
-          PLANETARY THEATER PRELOAD • READY FOR COMMAND IN 3 SECONDS
+        <div className="text-center text-[9px] sm:text-[10px] font-mono text-zinc-400 tracking-wider">
+          PLANETARY THEATER PRELOAD • READY FOR COMMAND IN 5 SECONDS
         </div>
       </div>
     </div>

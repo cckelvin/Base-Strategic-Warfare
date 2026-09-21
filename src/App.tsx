@@ -15,13 +15,13 @@ import {
   MapPin,
   Copy,
   Building2,
+  Bell,
 } from 'lucide-react';
 import { COUNTRIES, CountryFlag } from './countries';
 import { MILITARY_BASES, MilitaryBase } from './militaryBases';
 import BaseModal from './BaseModal';
 import UserInfoModal from './UserInfoModal';
 import SplashScreen from './SplashScreen';
-import FloatingNewsTab from './FloatingNewsTab';
 import NotificationsModal from './NotificationsModal';
 import CitiesModal from './CitiesModal';
 import { INITIAL_NOTIFICATIONS, NotificationCategory, NotificationItem } from './notificationsData';
@@ -83,12 +83,11 @@ export default function App() {
   const [isUserInfoOpen, setIsUserInfoOpen] = useState(false);
   const [isCountryPickerOpen, setIsCountryPickerOpen] = useState(false);
 
-  // 3-second heavy graphics splash screen state
+  // 5-second heavy graphics splash screen state
   const [showSplash, setShowSplash] = useState(true);
 
-  // News and notifications state
+  // Intelligence & notifications state
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
-  const [isNewsCollapsed, setIsNewsCollapsed] = useState(false);
   const [isNotificationsPageOpen, setIsNotificationsPageOpen] = useState(false);
   const [selectedNotificationCategory, setSelectedNotificationCategory] = useState<NotificationCategory | undefined>(undefined);
 
@@ -480,123 +479,151 @@ export default function App() {
         className="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing"
       />
 
-      {/* TOP LEFT CLUSTER: Circular Flag Button + Compact Money Tab */}
+      {/* TOP LEFT CLUSTER: Flag + Money on top row; Floating Notification Bell Button directly below Flag */}
       <div
         id="top-left-status-cluster"
-        className="fixed top-3.5 left-3.5 z-50 flex items-center gap-2"
+        className="fixed top-2 left-2 sm:top-3.5 sm:left-3.5 z-50 flex flex-col items-start gap-2 sm:gap-2.5"
       >
-        {/* Circular Button with Country Flag on it (Clicking opens Full-Page User Info Modal) */}
-        <div className="relative">
-          <button
-            id="country-flag-btn"
-            onClick={() => setIsUserInfoOpen(true)}
-            title={`Commander Profile: ${selectedCountry.name} (Click to open Commander Terminal)`}
-            aria-label={`Nation Flag: ${selectedCountry.name}`}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border-2 border-zinc-700/80 hover:border-red-500 shadow-2xl backdrop-blur-md overflow-hidden transition-all duration-200 cursor-pointer active:scale-95 group"
+        {/* Row 1: Circular Flag Button + Compact Money Tab */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Circular Button with Country Flag on it (Clicking opens Full-Page User Info Modal) */}
+          <div className="relative">
+            <button
+              id="country-flag-btn"
+              onClick={() => setIsUserInfoOpen(true)}
+              title={`Commander Profile: ${selectedCountry.name} (Click to open Commander Terminal)`}
+              aria-label={`Nation Flag: ${selectedCountry.name}`}
+              className="flex items-center justify-center w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border-2 border-zinc-700/80 hover:border-red-500 shadow-2xl backdrop-blur-md overflow-hidden transition-all duration-200 cursor-pointer active:scale-95 group"
+            >
+              <img
+                src={selectedCountry.flagUrl}
+                alt={selectedCountry.name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                referrerPolicy="no-referrer"
+              />
+            </button>
+          </div>
+
+          {/* Shorter Floating Tab: Money (Reduces cleanly on smaller screens) */}
+          <aside
+            id="money-floating-tab"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 bg-zinc-950/90 backdrop-blur-md border border-zinc-700/80 rounded-md sm:rounded-lg shadow-xl hover:border-emerald-500/50 transition-all"
           >
-            <img
-              src={selectedCountry.flagUrl}
-              alt={selectedCountry.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
-              referrerPolicy="no-referrer"
-            />
-          </button>
+            <div
+              id="money-icon-container"
+              className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded sm:rounded-md bg-emerald-500/15 text-emerald-400 shrink-0"
+            >
+              <CircleDollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              {isEditingMoney ? (
+                <div className="flex items-center gap-1">
+                  <span className="text-emerald-400 font-mono text-xs font-semibold">$</span>
+                  <input
+                    id="money-input-field"
+                    type="text"
+                    value={tempMoneyInput}
+                    onChange={(e) => setTempMoneyInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveMoney();
+                      if (e.key === 'Escape') setIsEditingMoney(false);
+                    }}
+                    autoFocus
+                    className="w-20 sm:w-24 bg-zinc-900 border border-emerald-500/50 rounded px-1 py-0.5 text-xs font-mono text-emerald-300 focus:outline-none"
+                  />
+                  <button
+                    id="save-money-btn"
+                    onClick={handleSaveMoney}
+                    className="p-0.5 sm:p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 cursor-pointer"
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <span
+                    id="money-tab-value"
+                    className="text-xs sm:text-sm font-bold font-mono tracking-tight text-emerald-400 tabular-nums"
+                  >
+                    {formattedMoney}
+                  </span>
+                  <button
+                    id="edit-money-btn"
+                    onClick={() => {
+                      setTempMoneyInput(String(money));
+                      setIsEditingMoney(true);
+                    }}
+                    title="Edit Treasury"
+                    aria-label="Edit Treasury"
+                    className="text-zinc-500 hover:text-zinc-300 transition-colors p-0.5 rounded cursor-pointer"
+                  >
+                    <Pencil className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </aside>
         </div>
 
-        {/* Shorter Floating Tab: Money */}
-        <aside
-          id="money-floating-tab"
-          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-950/90 backdrop-blur-md border border-zinc-700/80 rounded-lg shadow-xl hover:border-emerald-500/50 transition-all"
-        >
-          <div
-            id="money-icon-container"
-            className="flex items-center justify-center w-6 h-6 rounded-md bg-emerald-500/15 text-emerald-400"
+        {/* Row 2: Floating Notification Icon Button placed directly below the Flag Icon */}
+        <div className="relative">
+          <button
+            id="floating-notification-bell-btn"
+            onClick={() => {
+              setSelectedNotificationCategory(undefined);
+              setIsNotificationsPageOpen(true);
+            }}
+            title="Planetary Intelligence & Notifications (Click to open full page)"
+            aria-label="Intelligence Notifications Hub"
+            className="relative flex items-center justify-center w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-zinc-950/90 hover:bg-zinc-900 border-2 border-zinc-700/80 hover:border-red-500 text-zinc-200 hover:text-white shadow-2xl backdrop-blur-md transition-all duration-200 cursor-pointer active:scale-95 group"
           >
-            <CircleDollarSign className="w-4 h-4" />
-          </div>
+            <Bell className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-400 group-hover:text-red-300 transition-transform duration-200 group-hover:scale-110" />
 
-          <div className="flex items-center gap-1.5">
-            {isEditingMoney ? (
-              <div className="flex items-center gap-1">
-                <span className="text-emerald-400 font-mono text-xs font-semibold">$</span>
-                <input
-                  id="money-input-field"
-                  type="text"
-                  value={tempMoneyInput}
-                  onChange={(e) => setTempMoneyInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveMoney();
-                    if (e.key === 'Escape') setIsEditingMoney(false);
-                  }}
-                  autoFocus
-                  className="w-24 bg-zinc-900 border border-emerald-500/50 rounded px-1 py-0.5 text-xs font-mono text-emerald-300 focus:outline-none"
-                />
-                <button
-                  id="save-money-btn"
-                  onClick={handleSaveMoney}
-                  className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 cursor-pointer"
-                >
-                  <Check className="w-3 h-3" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <span
-                  id="money-tab-value"
-                  className="text-sm font-bold font-mono tracking-tight text-emerald-400 tabular-nums"
-                >
-                  {formattedMoney}
-                </span>
-                <button
-                  id="edit-money-btn"
-                  onClick={() => {
-                    setTempMoneyInput(String(money));
-                    setIsEditingMoney(true);
-                  }}
-                  title="Edit Treasury"
-                  aria-label="Edit Treasury"
-                  className="text-zinc-500 hover:text-zinc-300 transition-colors p-0.5 rounded cursor-pointer"
-                >
-                  <Pencil className="w-2.5 h-2.5" />
-                </button>
-              </div>
-            )}
-          </div>
-        </aside>
+            {/* Live unread indicator dot & ping animation */}
+            <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2 sm:h-2.5 sm:w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-red-500 border border-zinc-950"></span>
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* TOP MIDDLE: Shorter Floating Tab for UTC Game Time */}
+      {/* TOP MIDDLE / RIGHT ON MOBILE: Shorter Floating Tab for UTC Game Time */}
       <header
         id="game-time-floating-tab"
-        className="fixed top-3.5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-3.5 py-1.5 bg-zinc-950/90 backdrop-blur-md border border-zinc-700/80 rounded-lg shadow-xl hover:border-cyan-500/40 transition-all"
+        className="fixed top-2 right-2 sm:top-3.5 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto z-50 flex items-center gap-1.5 sm:gap-2.5 px-2 py-1 sm:px-3.5 sm:py-1.5 bg-zinc-950/90 backdrop-blur-md border border-zinc-700/80 rounded-md sm:rounded-lg shadow-xl hover:border-cyan-500/40 transition-all"
       >
         <div
           id="time-icon-container"
-          className="flex items-center justify-center w-6 h-6 rounded-md bg-cyan-500/15 text-cyan-400"
+          className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded sm:rounded-md bg-cyan-500/15 text-cyan-400 shrink-0"
         >
-          <Clock className="w-3.5 h-3.5" />
+          <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Pulsing indicator */}
-          <span className="relative flex h-1.5 w-1.5">
+          <span className="relative flex h-1 w-1 sm:h-1.5 sm:w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            <span className="relative inline-flex rounded-full h-1 w-1 sm:h-1.5 sm:w-1.5 bg-emerald-500"></span>
           </span>
 
           {/* Time & UTC Date in compact inline layout */}
           <span
             id="utc-clock-time"
-            className="text-sm font-bold font-mono tracking-wider text-zinc-100 tabular-nums"
+            className="text-xs sm:text-sm font-bold font-mono tracking-wider text-zinc-100 tabular-nums"
           >
             {hours}:{minutes}:{seconds}
           </span>
-          <span className="text-zinc-600 text-xs font-mono">|</span>
+          <span className="hidden sm:inline text-zinc-600 text-xs font-mono">|</span>
           <span
             id="utc-clock-date"
-            className="text-[11px] font-mono text-cyan-300/80 tracking-wide tabular-nums uppercase"
+            className="hidden sm:inline text-[11px] font-mono text-cyan-300/80 tracking-wide tabular-nums uppercase"
           >
             {day} {month} {year} UTC
+          </span>
+          <span className="sm:hidden text-[9px] font-mono text-cyan-400/80 font-bold uppercase">
+            UTC
           </span>
         </div>
       </header>
@@ -637,7 +664,7 @@ export default function App() {
       {/* RIGHT EDGE CONTROLS: Tiny compass icon button above military */}
       <div
         id="right-edge-controls"
-        className="fixed right-4 bottom-24 z-50 flex flex-col items-center gap-2"
+        className="fixed right-2.5 bottom-16 sm:right-4 sm:bottom-24 z-50 flex flex-col items-center gap-2"
       >
         {/* Tiny compass icon button */}
         <button
@@ -649,58 +676,51 @@ export default function App() {
               : 'Activate Compass: Pinpoints universal planetary coordinate on map'
           }
           aria-label="Universal Planetary Compass"
-          className={`flex items-center justify-center w-8 h-8 rounded-full border shadow-xl backdrop-blur-md transition-all duration-200 cursor-pointer ${
+          className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border shadow-xl backdrop-blur-md transition-all duration-200 cursor-pointer ${
             isPinpointActive
               ? 'bg-amber-500 text-zinc-950 border-amber-300 ring-2 ring-amber-400/50 scale-110'
               : 'bg-zinc-950/85 hover:bg-zinc-900 text-amber-400 border-zinc-700/80 hover:border-amber-400/70 hover:scale-105'
           }`}
         >
           <Compass
-            className={`w-4 h-4 transition-transform duration-300 ${
+            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 ${
               isPinpointActive ? 'rotate-45' : ''
             }`}
           />
         </button>
       </div>
 
-      {/* BOTTOM LEFT: Big Floating Tab (taller than wider, expandable/collapsible with a white > icon) */}
-      <FloatingNewsTab
-        notifications={notifications}
-        isCollapsed={isNewsCollapsed}
-        onToggleCollapse={() => setIsNewsCollapsed(!isNewsCollapsed)}
-        onOpenFullNotifications={(category) => {
-          setSelectedNotificationCategory(category);
-          setIsNotificationsPageOpen(true);
-        }}
-        extraCollapsedActions={
-          /* CITIES BUTTON: ONLY shown when notification update floating tab is collapsed */
-          <button
-            id="cities-bottom-left-btn"
-            onClick={() => setIsCitiesModalOpen(true)}
-            title="Strategic World Megacity Hubs"
-            aria-label="Strategic Megacities"
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-cyan-950/95 hover:bg-cyan-900 border border-cyan-500/80 hover:border-cyan-400 text-cyan-200 hover:text-white shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer active:scale-95 group font-mono"
-          >
-            <div className="w-5 h-5 rounded-md bg-cyan-900/80 border border-cyan-500/50 flex items-center justify-center text-cyan-300 group-hover:text-white">
-              <Building2 className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider">CITIES</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-cyan-800/80 text-[10px] text-cyan-300 border border-cyan-600/50">
-              12
-            </span>
-          </button>
-        }
-      />
+      {/* BOTTOM LEFT: Cities Button */}
+      <div
+        id="bottom-left-cities-container"
+        className="fixed bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 z-40"
+      >
+        <button
+          id="cities-bottom-left-btn"
+          onClick={() => setIsCitiesModalOpen(true)}
+          title="Strategic World Megacity Hubs"
+          aria-label="Strategic Megacities"
+          className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-cyan-950/95 hover:bg-cyan-900 border border-cyan-500/80 hover:border-cyan-400 text-cyan-200 hover:text-white shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer active:scale-95 group font-mono shrink-0"
+        >
+          <div className="w-4 h-4 sm:w-5 sm:h-5 rounded sm:rounded-md bg-cyan-900/80 border border-cyan-500/50 flex items-center justify-center text-cyan-300 group-hover:text-white shrink-0">
+            <Building2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          </div>
+          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">CITIES</span>
+          <span className="px-1 py-0.2 sm:px-1.5 sm:py-0.2 rounded-full bg-cyan-800/80 text-[9px] sm:text-[10px] text-cyan-300 border border-cyan-600/50">
+            12
+          </span>
+        </button>
+      </div>
 
-      {/* BOTTOM RIGHT CORNER: Military Button (bigger, less dark, tactical crimson camo with bold white text) */}
-      <div id="bottom-right-military-container" className="fixed right-4 bottom-4 z-50">
+      {/* BOTTOM RIGHT CORNER: Military Button (responsive sizing for smaller screens) */}
+      <div id="bottom-right-military-container" className="fixed right-2.5 bottom-2.5 sm:right-4 sm:bottom-4 z-50">
         <button
           id="military-btn"
           type="button"
           onClick={() => showComingSoon('Global Military Command')}
           aria-label="Military Command"
           title="Military Command"
-          className="relative flex items-center justify-center px-12 py-4.5 sm:py-5 min-w-[210px] rounded-full camo-crimson-bg border-2 border-red-400/90 shadow-[0_10px_35px_-3px_rgba(220,38,38,0.7),0_0_25px_rgba(239,68,68,0.45)] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer overflow-hidden group tracking-wider"
+          className="relative flex items-center justify-center px-5 py-2.5 sm:px-10 sm:py-4 md:px-12 md:py-4.5 min-w-[105px] sm:min-w-[170px] md:min-w-[210px] rounded-full camo-crimson-bg border-2 border-red-400/90 shadow-[0_10px_35px_-3px_rgba(220,38,38,0.7),0_0_25px_rgba(239,68,68,0.45)] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer overflow-hidden group tracking-wider"
         >
           {/* Subtle camo tactical bright gloss overlay */}
           <div className="absolute inset-0 rounded-full bg-black/15 group-hover:bg-black/5 transition-colors" />
@@ -709,7 +729,7 @@ export default function App() {
           {/* Stenciled Bold White Military Text */}
           <span
             id="military-btn-text"
-            className="relative text-sm sm:text-base font-black tracking-widest text-white uppercase font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
+            className="relative text-xs sm:text-sm md:text-base font-black tracking-widest text-white uppercase font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
           >
             MILITARY
           </span>

@@ -100,27 +100,27 @@ export default function NotificationsModal({
       className="fixed inset-0 z-[100] flex flex-col bg-zinc-950/95 backdrop-blur-2xl text-zinc-100 select-none animate-in fade-in duration-200"
     >
       {/* Top Navigation Bar */}
-      <header className="flex items-center justify-between px-6 py-4 bg-zinc-900/90 border-b border-zinc-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-red-950/70 border border-red-700/60 text-red-400">
-            <Radio className="w-5 h-5 animate-pulse" />
+      <header className="flex items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4 bg-zinc-900/90 border-b border-zinc-800 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-red-950/70 border border-red-700/60 text-red-400 shrink-0">
+            <Radio className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base md:text-lg font-bold font-mono text-zinc-100 uppercase tracking-wide">
-                Planetary Intelligence & Notifications Hub
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-sm sm:text-base md:text-lg font-bold font-mono text-zinc-100 uppercase tracking-wide">
+                Intelligence Hub
               </h1>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-red-900/40 text-red-300 border border-red-700/40">
-                LIVE TELEMETRY
+              <span className="px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded text-[9px] sm:text-[10px] font-mono bg-red-900/40 text-red-300 border border-red-700/40">
+                LIVE
               </span>
             </div>
-            <p className="text-xs font-mono text-zinc-400">
+            <p className="text-[10px] sm:text-xs font-mono text-zinc-400 hidden sm:block">
               Synchronized theater alerts across General, Nation, Military, Alliance & External vectors
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             onClick={handleMarkAllAsRead}
             title="Mark All as Read"
@@ -134,9 +134,9 @@ export default function NotificationsModal({
             id="close-notifications-modal-btn"
             onClick={onClose}
             aria-label="Close Notifications Page"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-mono font-semibold cursor-pointer transition-colors"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-mono font-semibold cursor-pointer transition-colors shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>CLOSE</span>
           </button>
         </div>
@@ -145,20 +145,20 @@ export default function NotificationsModal({
       {/* Categories Navigation Bar (Divided by General, Nation, Military, Alliance, External) */}
       <nav
         id="notification-categories-nav"
-        className="flex items-center justify-between px-6 py-2 bg-zinc-900/50 border-b border-zinc-800 overflow-x-auto gap-2"
+        className="flex items-center justify-between px-3 py-1.5 sm:px-6 sm:py-2 bg-zinc-900/50 border-b border-zinc-800 overflow-x-auto gap-1.5 sm:gap-2 shrink-0 scrollbar-none"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* ALL */}
           <button
             onClick={() => setActiveCategory('all')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'all'
                 ? 'bg-zinc-100 text-zinc-950 shadow-md'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
             }`}
           >
             <span>ALL</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-300">
+            <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-300">
               {notifications.length}
             </span>
           </button>
@@ -167,15 +167,15 @@ export default function NotificationsModal({
           <button
             id="tab-notif-general"
             onClick={() => setActiveCategory('general')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'general'
                 ? 'bg-amber-500 text-zinc-950 shadow-md'
                 : 'text-amber-400/80 hover:text-amber-300 hover:bg-amber-950/40'
             }`}
           >
-            <Globe className="w-3.5 h-3.5" />
+            <Globe className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>GENERAL</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-amber-300">
+            <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-amber-300">
               {notifications.filter((n) => n.category === 'general').length}
             </span>
           </button>
@@ -184,15 +184,15 @@ export default function NotificationsModal({
           <button
             id="tab-notif-nation"
             onClick={() => setActiveCategory('nation')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'nation'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-blue-400/80 hover:text-blue-300 hover:bg-blue-950/40'
             }`}
           >
-            <Flag className="w-3.5 h-3.5" />
+            <Flag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>NATION</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-blue-300">
+            <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-blue-300">
               {notifications.filter((n) => n.category === 'nation').length}
             </span>
           </button>
@@ -201,13 +201,13 @@ export default function NotificationsModal({
           <button
             id="tab-notif-military"
             onClick={() => setActiveCategory('military')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'military'
                 ? 'bg-red-600 text-white shadow-md'
                 : 'text-red-400/80 hover:text-red-300 hover:bg-red-950/40'
             }`}
           >
-            <Shield className="w-3.5 h-3.5" />
+            <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>MILITARY</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-red-300">
               {notifications.filter((n) => n.category === 'military').length}

@@ -38,21 +38,21 @@ export default function CitiesModal({
       className="fixed inset-0 z-[100] flex flex-col bg-zinc-950/95 backdrop-blur-2xl text-zinc-100 select-none animate-in fade-in duration-200"
     >
       {/* Top Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-zinc-900/90 border-b border-zinc-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-950/70 border border-cyan-700/60 text-cyan-400">
-            <Building2 className="w-5 h-5" />
+      <header className="flex items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4 bg-zinc-900/90 border-b border-zinc-800 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-cyan-950/70 border border-cyan-700/60 text-cyan-400 shrink-0">
+            <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base md:text-lg font-bold font-mono text-zinc-100 uppercase tracking-wide">
-                Strategic World Megacity Hubs
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-sm sm:text-base md:text-lg font-bold font-mono text-zinc-100 uppercase tracking-wide">
+                Megacity Hubs
               </h1>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-900/40 text-cyan-300 border border-cyan-700/40">
-                ECONOMIC & DEFENSE MATRIX
+              <span className="px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded text-[9px] sm:text-[10px] font-mono bg-cyan-900/40 text-cyan-300 border border-cyan-700/40">
+                DEFENSE MATRIX
               </span>
             </div>
-            <p className="text-xs font-mono text-zinc-400">
+            <p className="text-[10px] sm:text-xs font-mono text-zinc-400 hidden sm:block">
               Planetary urban centers, gross metropolitan product, population density & garrison grids
             </p>
           </div>
@@ -62,9 +62,9 @@ export default function CitiesModal({
           id="close-cities-modal-btn"
           onClick={onClose}
           aria-label="Close Cities Modal"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-mono font-semibold cursor-pointer transition-colors"
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-mono font-semibold cursor-pointer transition-colors shrink-0"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>CLOSE</span>
         </button>
       </header>
@@ -72,8 +72,8 @@ export default function CitiesModal({
       {/* Main Content Two-Column Layout */}
       <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
         {/* Left Column: Cities List & Search */}
-        <div className="w-full md:w-5/12 border-r border-zinc-800 flex flex-col bg-zinc-950/60">
-          <div className="p-3 border-b border-zinc-800 bg-zinc-900/40">
+        <div className="w-full h-44 sm:h-56 md:h-full md:w-5/12 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col bg-zinc-950/60 shrink-0 md:shrink">
+          <div className="p-2 sm:p-3 border-b border-zinc-800 bg-zinc-900/40">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
@@ -81,12 +81,12 @@ export default function CitiesModal({
                 placeholder="Search global megacity..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs font-mono bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-500"
+                className="w-full pl-8 pr-3 py-1 text-xs font-mono bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-3 flex flex-col gap-1.5 sm:gap-2">
             {filteredCities.map((city) => {
               const isSelected = selectedCity.id === city.id;
               return (
