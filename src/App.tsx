@@ -21,7 +21,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { COUNTRIES, CountryFlag } from './countries';
-import { MILITARY_BASES, MilitaryBase } from './militaryBases';
+import { MILITARY_BASES, getAllMilitaryBases, MilitaryBase } from './militaryBases';
 import BaseModal from './BaseModal';
 import UserInfoModal from './UserInfoModal';
 import SplashScreen from './SplashScreen';
@@ -168,6 +168,64 @@ export default function App() {
             timeAgo: 'Just now',
             severity: 'critical',
             source: 'EXPEDITION COMMAND',
+            isRead: false,
+          },
+          ...n,
+        ]);
+      }
+
+      return updated;
+    });
+  };
+
+  // Occupied military bases state (for base section restriction)
+  const [occupiedBaseIds, setOccupiedBaseIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('base_warfare_occupied_bases');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+
+  const handleToggleOccupyBase = (baseId: string) => {
+    setOccupiedBaseIds((prev) => {
+      const isAlreadyOccupied = prev.includes(baseId);
+      const updated = isAlreadyOccupied ? prev.filter((id) => id !== baseId) : [...prev, baseId];
+      localStorage.setItem('base_warfare_occupied_bases', JSON.stringify(updated));
+
+      const targetBase = MILITARY_BASES.find((b) => b.id === baseId);
+      const baseName = targetBase ? targetBase.name : baseId;
+
+      if (isAlreadyOccupied) {
+        setNotifications((n) => [
+          {
+            id: `withdraw-base-${Date.now()}`,
+            category: 'military',
+            title: 'Territory Garrison Relinquished',
+            summary: `Forces withdrew from ${baseName}.`,
+            detail: `Strategic forces evacuated ${baseName}. Territory control relinquished to neutral command.`,
+            timestamp: new Date().toISOString(),
+            timeAgo: 'Just now',
+            severity: 'info',
+            source: 'THEATER COMMAND',
+            isRead: false,
+          },
+          ...n,
+        ]);
+      } else {
+        setNotifications((n) => [
+          {
+            id: `occupy-base-${Date.now()}`,
+            category: 'military',
+            title: 'Territory Seized & Annexed',
+            summary: `Expeditionary forces seized ${baseName}!`,
+            detail: `Expeditionary forces seized control of ${baseName}! Fortress and defense arrays integrated into national defense grid.`,
+            timestamp: new Date().toISOString(),
+            timeAgo: 'Just now',
+            severity: 'critical',
+            source: 'THEATER COMMAND',
             isRead: false,
           },
           ...n,
@@ -568,7 +626,8 @@ export default function App() {
     ).addTo(map);
 
     // Place realistic military base icons in requested locations
-    MILITARY_BASES.forEach((base) => {
+    const currentMilitaryBases = getAllMilitaryBases();
+    currentMilitaryBases.forEach((base) => {
       const baseIcon = createMilitaryBaseIcon(base);
       const baseMarker = L.marker([base.lat, base.lng], {
         icon: baseIcon,
@@ -990,12 +1049,15 @@ export default function App() {
         />
       )}
 
-      {/* FULL PAGE MILITARY COMMAND MODAL: Top nav notch for base, intel, activity, units, stats, programs */}
+      {/* FULL PAGE MILITARY COMMAND MODAL: Top nav bar only, restricted bases, Airtable 7 tables */}
       {isMilitaryOpen && (
         <MilitaryModal
           userCountry={selectedCountry}
           money={money}
           aiAgents={aiAgents}
+          occupiedCityIds={occupiedCityIds}
+          occupiedBaseIds={occupiedBaseIds}
+          onToggleOccupyBase={handleToggleOccupyBase}
           onDeductMoney={handleDeductMoney}
           onAddNotification={handleAddNotification}
           onFlyToBase={(lat, lng, zoom) => {

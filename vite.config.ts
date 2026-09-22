@@ -110,6 +110,30 @@ export default defineConfig(() => {
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      proxy: {
+        '/api/military-database': {
+          target: 'https://api.airtable.com/v0',
+          changeOrigin: true,
+          secure: true,
+          headers: {
+            Authorization: `Bearer ${process.env.AIRTABLE_API_KEY || ''}`,
+          },
+          rewrite: (pathStr: string) => {
+            const baseId = process.env.AIRTABLE_BASE_ID || 'app6PrZu6VsFDWpWS';
+            const tablePart = pathStr.replace(/^\/api\/military-database/, '');
+            return `/${baseId}${tablePart}`;
+          },
+        },
+        '/api/airtable': {
+          target: 'https://api.airtable.com/v0',
+          changeOrigin: true,
+          secure: true,
+          headers: {
+            Authorization: `Bearer ${process.env.AIRTABLE_API_KEY || ''}`,
+          },
+          rewrite: (pathStr: string) => pathStr.replace(/^\/api\/airtable/, ''),
+        },
+      },
     },
   };
 });

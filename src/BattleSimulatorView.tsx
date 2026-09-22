@@ -17,18 +17,29 @@ import {
   Target,
   Cpu,
   Layers,
+  BarChart3,
+  Plane,
+  Ship,
+  Sparkles,
+  RefreshCw,
+  Info,
 } from 'lucide-react';
 import {
   AirForceUnit,
+  NavyUnit,
+  GroundUnit,
   MissileUnit,
   ElectronicSystemUnit,
   MilitaryAirtableService,
 } from './militaryAirtableDatabase';
 import {
-  AirBattleEngine,
-  BattleSimulationResult,
-  SimulationRound,
-} from './battleEngine';
+  StrategicCombatEngine,
+  DetailedBattleResult,
+  MonteCarloOutcome,
+  CombatDomain,
+  BattleType,
+  UnifiedCombatUnit,
+} from './combatEngine';
 
 interface BattleSimulatorViewProps {
   onAddNotification?: (title: string, message: string) => void;
@@ -37,41 +48,100 @@ interface BattleSimulatorViewProps {
 export const BattleSimulatorView: React.FC<BattleSimulatorViewProps> = ({
   onAddNotification,
 }) => {
+  // Database data
   const airForceUnits = MilitaryAirtableService.getAirForceUnits();
+  const navyUnits = MilitaryAirtableService.getNavyUnits();
+  const groundUnits = MilitaryAirtableService.getGroundUnits();
   const missiles = MilitaryAirtableService.getMissiles();
   const electronicSystems = MilitaryAirtableService.getElectronicSystems();
 
-  // Selection states
+  // Domain selection
+  const [blueDomain, setBlueDomain] = useState<CombatDomain>('air');
+  const [redDomain, setRedDomain] = useState<CombatDomain>('air');
+
+  // Unit selections
   const [blueUnitId, setBlueUnitId] = useState<string>(airForceUnits[0]?.id || 'af-f22');
   const [redUnitId, setRedUnitId] = useState<string>(airForceUnits[1]?.id || 'af-su57');
+
+  // Squad sizes
+  const [blueCount, setBlueCount] = useState<number>(12);
+  const [redCount, setRedCount] = useState<number>(20);
+
+  // Engagement distance
+  const [distanceKm, setDistanceKm] = useState<number>(85);
+
+  // Optional attachments
   const [blueMissileId, setBlueMissileId] = useState<string>(missiles[0]?.id || '');
   const [redMissileId, setRedMissileId] = useState<string>(missiles[1]?.id || '');
   const [blueSysId, setBlueSysId] = useState<string>(electronicSystems[0]?.id || '');
-  const [redSysId, setRedSysId] = useState<string>(electronicSystems[2]?.id || '');
+  const [redSysId, setRedSysId] = useState<string>(electronicSystems[1]?.id || '');
 
-  // Simulation states
-  const [simResult, setSimResult] = useState<BattleSimulationResult | null>(null);
+  // Simulation execution results
+  const [simResult, setSimResult] = useState<DetailedBattleResult | null>(null);
   const [activeRoundIndex, setActiveRoundIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const playIntervalRef = useRef<any>(null);
 
-  const selectedBlueUnit = airForceUnits.find((u) => u.id === blueUnitId) || airForceUnits[0];
-  const selectedRedUnit = airForceUnits.find((u) => u.id === redUnitId) || airForceUnits[1];
+  // Monte Carlo results
+  const [monteCarlo, setMonteCarlo] = useState<MonteCarloOutcome | null>(null);
+  const [isCalculatingMonteCarlo, setIsCalculatingMonteCarlo] = useState<boolean>(false);
+
+  // Helper to get unit pool by domain
+  const getUnitsByDomain = (domain: CombatDomain): UnifiedCombatUnit[] => {
+    if (domain === 'air') return airForceUnits;
+    if (domain === 'navy') return navyUnits;
+    return groundUnits;
+  };
+
+  const blueUnitList = getUnitsByDomain(blueDomain);
+  const redUnitList = getUnitsByDomain(redDomain);
+
+  const selectedBlueUnit =
+    blueUnitList.find((u) => u.id === blueUnitId) || blueUnitList[0] || airForceUnits[0];
+  const selectedRedUnit =
+    redUnitList.find((u) => u.id === redUnitId) || redUnitList[0] || airForceUnits[1];
+
   const selectedBlueMissile = missiles.find((m) => m.id === blueMissileId);
   const selectedRedMissile = missiles.find((m) => m.id === redMissileId);
   const selectedBlueSys = electronicSystems.find((s) => s.id === blueSysId);
   const selectedRedSys = electronicSystems.find((s) => s.id === redSysId);
 
-  // Run simulation
+  const battleType = StrategicCombatEngine.getBattleType(blueDomain, redDomain);
+
+  // Update selected unit when domain switches if current unit is invalid
+  const handleBlueDomainChange = (domain: CombatDomain) => {
+    setBlueDomain(domain);
+    const pool = getUnitsByDomain(domain);
+    if (pool.length > 0) {
+      setBlueUnitId(pool[0].id);
+    }
+    setSimResult(null);
+    setMonteCarlo(null);
+  };
+
+  const handleRedDomainChange = (domain: CombatDomain) => {
+    setRedDomain(domain);
+    const pool = getUnitsByDomain(domain);
+    if (pool.length > 0) {
+      setRedUnitId(pool[0].id);
+    }
+    setSimResult(null);
+    setMonteCarlo(null);
+  };
+
+  // Run detailed single simulation
   const handleRunSimulation = () => {
     if (playIntervalRef.current) {
       clearInterval(playIntervalRef.current);
     }
     setIsPlaying(false);
 
-    const result = AirBattleEngine.simulateEngagement(
+    const result = StrategicCombatEngine.simulateBattle(
       selectedBlueUnit,
       selectedRedUnit,
+      blueCount,
+      redCount,
+      distanceKm,
       selectedBlueMissile,
       selectedRedMissile,
       selectedBlueSys,
@@ -83,13 +153,41 @@ export const BattleSimulatorView: React.FC<BattleSimulatorViewProps> = ({
 
     if (onAddNotification) {
       onAddNotification(
-        'Dogfight Simulation Completed',
-        `${result.blueUnit.aircraft} vs ${result.redUnit.aircraft} concluded: ${result.winningReason}`
+        'Combat Simulation Complete',
+        `${battleType} Engagement: ${StrategicCombatEngine.getUnitName(selectedBlueUnit)} (${blueCount}) vs ${StrategicCombatEngine.getUnitName(selectedRedUnit)} (${redCount})`
       );
     }
   };
 
-  // Playback loop
+  // Run Monte Carlo empirical probability analysis
+  const handleRunMonteCarlo = () => {
+    setIsCalculatingMonteCarlo(true);
+    setTimeout(() => {
+      const outcome = StrategicCombatEngine.runMonteCarloSimulation(
+        selectedBlueUnit,
+        selectedRedUnit,
+        blueCount,
+        redCount,
+        distanceKm,
+        selectedBlueMissile,
+        selectedRedMissile,
+        selectedBlueSys,
+        selectedRedSys,
+        300
+      );
+      setMonteCarlo(outcome);
+      setIsCalculatingMonteCarlo(false);
+
+      if (onAddNotification) {
+        onAddNotification(
+          'Monte Carlo Analysis (300 Runs)',
+          `Empirical Probability: Blue Victory: ${outcome.pBlueVictory}%, Red Victory: ${outcome.pRedVictory}%, Draw: ${outcome.pDraw}%`
+        );
+      }
+    }, 50);
+  };
+
+  // Playback timer
   useEffect(() => {
     if (isPlaying && simResult) {
       playIntervalRef.current = setInterval(() => {
@@ -100,111 +198,216 @@ export const BattleSimulatorView: React.FC<BattleSimulatorViewProps> = ({
           }
           return prev + 1;
         });
-      }, 1600);
+      }, 1400);
     } else {
       if (playIntervalRef.current) {
         clearInterval(playIntervalRef.current);
       }
     }
     return () => {
-      if (playIntervalRef.current) {
-        clearInterval(playIntervalRef.current);
-      }
+      if (playIntervalRef.current) clearInterval(playIntervalRef.current);
     };
   }, [isPlaying, simResult]);
 
-  const currentRound: SimulationRound | undefined = simResult?.rounds[activeRoundIndex];
+  // Theoretical analytical numbers
+  const blueName = StrategicCombatEngine.getUnitName(selectedBlueUnit);
+  const redName = StrategicCombatEngine.getUnitName(selectedRedUnit);
 
-  // Parameters sequence requested by user
-  const RULE_SEQUENCE = [
-    { key: 'armor', label: 'Armor', icon: Shield, unit: 'HP', desc: 'Structural hull durability' },
-    { key: 'speed', label: 'Speed', icon: Gauge, unit: 'km/h', desc: 'Kinematic closure & intercept' },
-    { key: 'airAttackPower', label: 'Air Attack Power', icon: Flame, unit: 'PWR', desc: 'Missile/gun lethality' },
-    { key: 'airResistance', label: 'Air Resistance', icon: Shield, unit: 'DEF', desc: 'ECM, flares & stealth skin' },
-    { key: 'weaponCapacity', label: 'Weapon Capacity', icon: Layers, unit: 'Rnds', desc: 'Internal bay & pylon ammo' },
-    { key: 'sensors', label: 'Sensors', icon: Radio, unit: 'RAT', desc: 'AESA radar & IRST track' },
-    { key: 'stealth', label: 'Stealth', icon: Eye, unit: '%', desc: 'RCS & thermal suppression' },
-    { key: 'maneuverability', label: 'Maneuverability', icon: Wind, unit: 'AGI', desc: 'High-G break-turn agility' },
-    { key: 'attackRange', label: 'Attack Range', icon: Target, unit: 'km', desc: 'BVR missile launch envelope' },
-    { key: 'fireRate', label: 'Fire Rate', icon: Zap, unit: 'vly', desc: 'Simultaneous salvo burst' },
-  ] as const;
+  const blueAttackRange = selectedBlueMissile?.range || selectedBlueUnit.attackRange || 80;
+  const redAttackRange = selectedRedMissile?.range || selectedRedUnit.attackRange || 80;
+
+  const blueInRange = StrategicCombatEngine.canEngageTarget(distanceKm, blueAttackRange);
+  const redInRange = StrategicCombatEngine.canEngageTarget(distanceKm, redAttackRange);
+
+  const blueElecBonus = selectedBlueSys ? (selectedBlueSys.stealthDetection || 15) * 0.003 : 0;
+  const redElecBonus = selectedRedSys ? (selectedRedSys.stealthDetection || 15) * 0.003 : 0;
+
+  const blueDetectProb = StrategicCombatEngine.calculateDetectionProbability(
+    selectedBlueUnit.sensors,
+    selectedRedUnit.stealth,
+    blueElecBonus
+  );
+  const redDetectProb = StrategicCombatEngine.calculateDetectionProbability(
+    selectedRedUnit.sensors,
+    selectedBlueUnit.stealth,
+    redElecBonus
+  );
+
+  const blueHitProb = StrategicCombatEngine.calculateHitProbability(
+    { sensors: selectedBlueUnit.sensors, maneuverability: selectedBlueUnit.maneuverability, speed: selectedBlueUnit.speed },
+    { stealth: selectedRedUnit.stealth, maneuverability: selectedRedUnit.maneuverability, speed: selectedRedUnit.speed }
+  );
+  const redHitProb = StrategicCombatEngine.calculateHitProbability(
+    { sensors: selectedRedUnit.sensors, maneuverability: selectedRedUnit.maneuverability, speed: selectedRedUnit.speed },
+    { stealth: selectedBlueUnit.stealth, maneuverability: selectedBlueUnit.maneuverability, speed: selectedBlueUnit.speed }
+  );
+
+  const blueRawPower = StrategicCombatEngine.resolveAttackPower(selectedBlueUnit, redDomain);
+  const redRawPower = StrategicCombatEngine.resolveAttackPower(selectedRedUnit, blueDomain);
+  const blueResistance = StrategicCombatEngine.resolveResistance(selectedBlueUnit, redDomain);
+  const redResistance = StrategicCombatEngine.resolveResistance(selectedRedUnit, blueDomain);
+
+  const blueDmgCalc = StrategicCombatEngine.calculateDamage(blueRawPower, redResistance);
+  const redDmgCalc = StrategicCombatEngine.calculateDamage(redRawPower, blueResistance);
+
+  const activeRound = simResult?.rounds[activeRoundIndex] || null;
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto">
-      {/* Top Banner explaining the 10-Step Rule Sequence */}
-      <div className="p-3.5 bg-zinc-900/90 border border-zinc-800 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
-        <div>
+    <div className="space-y-6 text-zinc-100 font-sans pb-12">
+      {/* Top Banner: Stat-Driven Universal Combat Engine */}
+      <div className="p-4 bg-zinc-900/90 border border-zinc-800 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 backdrop-blur-md">
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="p-1 rounded bg-red-950 text-red-400 border border-red-500/40">
-              <Crosshair className="w-4 h-4" />
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-950 text-red-400 border border-red-500/40">
+              BATTLE ENGINE
             </span>
-            <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-zinc-100">
-              TACTICAL AIR-VS-AIR COMBAT BATTLE ENGINE
-            </h3>
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-800 text-zinc-300 border border-zinc-700">
+              {battleType} THEATER ENGAGEMENT
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono text-zinc-400">
+              Stat-Driven Simulation Engine
+            </span>
           </div>
-          <p className="text-xs text-zinc-400 font-sans mt-1">
-            Simulates beyond-visual-range (BVR) and dogfight dogmas adhering strictly to the 10-parameter pipeline:
+          <h2 className="text-lg font-bold font-mono tracking-tight text-white flex items-center gap-2">
+            <Crosshair className="w-5 h-5 text-red-500" />
+            Universal Multi-Domain Combat Simulator
+          </h2>
+          <p className="text-xs text-zinc-400">
+            Formulas: Detection (Sensors vs Stealth) • Engagement (Attack Range) • Hit Probability • Damage & Armor Resistance • Individual HP Tracking • Monte Carlo Probability.
           </p>
-          <div className="flex flex-wrap items-center gap-1.5 mt-2 font-mono text-[10px]">
-            {RULE_SEQUENCE.map((r, i) => (
-              <span key={r.key} className="flex items-center gap-1 text-zinc-300 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
-                <span className="text-red-400 font-bold">{i + 1}.</span>
-                <span>{r.label}</span>
-                {i < RULE_SEQUENCE.length - 1 && <span className="text-zinc-600 font-bold ml-1">→</span>}
-              </span>
-            ))}
-          </div>
         </div>
 
-        <button
-          onClick={handleRunSimulation}
-          className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-95 shrink-0"
-        >
-          <Play className="w-4 h-4 fill-white" />
-          <span>ENGAGE INTERCEPT (SIMULATE)</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRunSimulation}
+            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-mono text-xs font-bold rounded-lg flex items-center gap-2 shadow-lg transition-all cursor-pointer"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>Simulate Engagement</span>
+          </button>
+          <button
+            onClick={handleRunMonteCarlo}
+            disabled={isCalculatingMonteCarlo}
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-cyan-300 border border-cyan-500/40 font-mono text-xs font-bold rounded-lg flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+          >
+            <BarChart3 className={`w-4 h-4 ${isCalculatingMonteCarlo ? 'animate-spin' : ''}`} />
+            <span>Monte Carlo (300 Runs)</span>
+          </button>
+        </div>
       </div>
 
-      {/* Combatant Selection Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Blue Force (Commander Aircraft) */}
-        <div className="p-4 bg-zinc-900/80 border border-blue-500/40 rounded-xl space-y-3">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+      {/* Force Composition & Domain Selector Bento */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* BLUE FORCE (Friendly Sovereign Task Force) */}
+        <div className="p-4 bg-zinc-900/80 border border-cyan-500/40 rounded-xl space-y-4 shadow-[0_0_20px_rgba(6,182,212,0.06)]">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-blue-400">
-                SIDE A: BLUE FORCE (INTERCEPTOR)
-              </span>
+              <span className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
+              <h3 className="font-mono text-sm font-bold text-cyan-400">BLUE FORCE (Friendly Contingent)</h3>
             </div>
-            <span className="text-[10px] font-mono text-zinc-400">
-              Origin: {selectedBlueUnit.countryOrigin || 'NATO'}
-            </span>
+            {/* Domain Tabs */}
+            <div className="flex items-center bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-xs font-mono">
+              <button
+                onClick={() => handleBlueDomainChange('air')}
+                className={`px-2 py-1 rounded flex items-center gap-1 cursor-pointer ${
+                  blueDomain === 'air' ? 'bg-cyan-950 text-cyan-300 font-bold border border-cyan-500/40' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Plane className="w-3 h-3" /> Air
+              </button>
+              <button
+                onClick={() => handleBlueDomainChange('navy')}
+                className={`px-2 py-1 rounded flex items-center gap-1 cursor-pointer ${
+                  blueDomain === 'navy' ? 'bg-cyan-950 text-cyan-300 font-bold border border-cyan-500/40' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Ship className="w-3 h-3" /> Navy
+              </button>
+              <button
+                onClick={() => handleBlueDomainChange('ground')}
+                className={`px-2 py-1 rounded flex items-center gap-1 cursor-pointer ${
+                  blueDomain === 'ground' ? 'bg-cyan-950 text-cyan-300 font-bold border border-cyan-500/40' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Crosshair className="w-3 h-3" /> Ground
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-mono text-zinc-400 block">Select Primary Aircraft</label>
-            <select
-              value={blueUnitId}
-              onChange={(e) => setBlueUnitId(e.target.value)}
-              className="w-full bg-zinc-950 text-xs font-mono text-zinc-200 border border-zinc-700 rounded-lg p-2 focus:border-blue-500 outline-none"
-            >
-              {airForceUnits.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.aircraft} ({u.aircraftType})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] text-zinc-400 block mb-1">Equipped Missile</label>
+              <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">
+                Select Platform ({blueDomain.toUpperCase()})
+              </label>
+              <select
+                value={blueUnitId}
+                onChange={(e) => setBlueUnitId(e.target.value)}
+                className="w-full px-2.5 py-1.5 bg-zinc-950 border border-zinc-700 rounded-lg text-xs font-mono text-zinc-200 focus:outline-none focus:border-cyan-500"
+              >
+                {blueUnitList.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {StrategicCombatEngine.getUnitName(u)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                  Formation Count
+                </label>
+                <span className="text-xs font-mono font-bold text-cyan-300">{blueCount} Units</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={48}
+                value={blueCount}
+                onChange={(e) => setBlueCount(Number(e.target.value))}
+                className="w-full accent-cyan-500 cursor-pointer"
+              />
+            </div>
+          </div>
+
+          {/* Unit Key Stats Preview */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 p-2.5 bg-zinc-950/70 border border-zinc-800/80 rounded-lg font-mono text-[10px]">
+            <div className="text-center">
+              <div className="text-zinc-500">HP (Armor)</div>
+              <div className="font-bold text-white">{selectedBlueUnit.armor}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Speed</div>
+              <div className="font-bold text-cyan-300">{selectedBlueUnit.speed}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Sensors</div>
+              <div className="font-bold text-emerald-400">{selectedBlueUnit.sensors}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Stealth</div>
+              <div className="font-bold text-purple-400">{selectedBlueUnit.stealth}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Atk Range</div>
+              <div className="font-bold text-amber-400">{blueAttackRange} km</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Fire Rate</div>
+              <div className="font-bold text-red-400">{selectedBlueUnit.fireRate}/min</div>
+            </div>
+          </div>
+
+          {/* Optional Attachments */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+            <div>
+              <label className="text-[9px] text-zinc-400 block mb-0.5">Equipped Munition</label>
               <select
                 value={blueMissileId}
                 onChange={(e) => setBlueMissileId(e.target.value)}
-                className="w-full bg-zinc-950 text-[11px] text-zinc-200 border border-zinc-800 rounded p-1.5 outline-none"
+                className="w-full px-2 py-1 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-300"
               >
-                <option value="">Standard Internal Payload</option>
+                <option value="">Standard Onboard Loadout</option>
                 {missiles.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.missile} ({m.range}km)
@@ -212,13 +415,12 @@ export const BattleSimulatorView: React.FC<BattleSimulatorViewProps> = ({
                 ))}
               </select>
             </div>
-
             <div>
-              <label className="text-[10px] text-zinc-400 block mb-1">Electronic EW Pod</label>
+              <label className="text-[9px] text-zinc-400 block mb-0.5">EW / Radar System</label>
               <select
                 value={blueSysId}
                 onChange={(e) => setBlueSysId(e.target.value)}
-                className="w-full bg-zinc-950 text-[11px] text-zinc-200 border border-zinc-800 rounded p-1.5 outline-none"
+                className="w-full px-2 py-1 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-300"
               >
                 <option value="">Integrated Avionics</option>
                 {electronicSystems.map((s) => (
@@ -229,58 +431,118 @@ export const BattleSimulatorView: React.FC<BattleSimulatorViewProps> = ({
               </select>
             </div>
           </div>
-
-          {/* Quick unit specs pill */}
-          <div className="p-2.5 bg-zinc-950 rounded-lg border border-zinc-800/80 text-[11px] font-mono text-zinc-400 space-y-1">
-            <div className="flex justify-between">
-              <span>Hull Armor: <strong className="text-white">{selectedBlueUnit.armor} HP</strong></span>
-              <span>Speed: <strong className="text-cyan-400">{selectedBlueUnit.speed} km/h</strong></span>
-            </div>
-            <div className="flex justify-between">
-              <span>Attack Range: <strong className="text-amber-400">{selectedBlueUnit.attackRange} km</strong></span>
-              <span>Stealth: <strong className="text-purple-400">{selectedBlueUnit.stealth}%</strong></span>
-            </div>
-          </div>
         </div>
 
-        {/* Red Force (Opposing Aircraft) */}
-        <div className="p-4 bg-zinc-900/80 border border-red-500/40 rounded-xl space-y-3">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+        {/* RED FORCE (Hostile Opposing Formation) */}
+        <div className="p-4 bg-zinc-900/80 border border-red-500/40 rounded-xl space-y-4 shadow-[0_0_20px_rgba(239,68,68,0.06)]">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-red-400">
-                SIDE B: RED FORCE (ADVERSARY)
-              </span>
+              <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
+              <h3 className="font-mono text-sm font-bold text-red-400">RED FORCE (Opposing Formation)</h3>
             </div>
-            <span className="text-[10px] font-mono text-zinc-400">
-              Origin: {selectedRedUnit.countryOrigin || 'OPFOR'}
-            </span>
+            {/* Domain Tabs */}
+            <div className="flex items-center bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-xs font-mono">
+              <button
+                onClick={() => handleRedDomainChange('air')}
+                className={`px-2 py-1 rounded flex items-center gap-1 cursor-pointer ${
+                  redDomain === 'air' ? 'bg-red-950 text-red-300 font-bold border border-red-500/40' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Plane className="w-3 h-3" /> Air
+              </button>
+              <button
+                onClick={() => handleRedDomainChange('navy')}
+                className={`px-2 py-1 rounded flex items-center gap-1 cursor-pointer ${
+                  redDomain === 'navy' ? 'bg-red-950 text-red-300 font-bold border border-red-500/40' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Ship className="w-3 h-3" /> Navy
+              </button>
+              <button
+                onClick={() => handleRedDomainChange('ground')}
+                className={`px-2 py-1 rounded flex items-center gap-1 cursor-pointer ${
+                  redDomain === 'ground' ? 'bg-red-950 text-red-300 font-bold border border-red-500/40' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Crosshair className="w-3 h-3" /> Ground
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-mono text-zinc-400 block">Select Primary Aircraft</label>
-            <select
-              value={redUnitId}
-              onChange={(e) => setRedUnitId(e.target.value)}
-              className="w-full bg-zinc-950 text-xs font-mono text-zinc-200 border border-zinc-700 rounded-lg p-2 focus:border-red-500 outline-none"
-            >
-              {airForceUnits.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.aircraft} ({u.aircraftType})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] text-zinc-400 block mb-1">Equipped Missile</label>
+              <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">
+                Select Platform ({redDomain.toUpperCase()})
+              </label>
+              <select
+                value={redUnitId}
+                onChange={(e) => setRedUnitId(e.target.value)}
+                className="w-full px-2.5 py-1.5 bg-zinc-950 border border-zinc-700 rounded-lg text-xs font-mono text-zinc-200 focus:outline-none focus:border-red-500"
+              >
+                {redUnitList.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {StrategicCombatEngine.getUnitName(u)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                  Formation Count
+                </label>
+                <span className="text-xs font-mono font-bold text-red-400">{redCount} Units</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={48}
+                value={redCount}
+                onChange={(e) => setRedCount(Number(e.target.value))}
+                className="w-full accent-red-500 cursor-pointer"
+              />
+            </div>
+          </div>
+
+          {/* Unit Key Stats Preview */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 p-2.5 bg-zinc-950/70 border border-zinc-800/80 rounded-lg font-mono text-[10px]">
+            <div className="text-center">
+              <div className="text-zinc-500">HP (Armor)</div>
+              <div className="font-bold text-white">{selectedRedUnit.armor}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Speed</div>
+              <div className="font-bold text-cyan-300">{selectedRedUnit.speed}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Sensors</div>
+              <div className="font-bold text-emerald-400">{selectedRedUnit.sensors}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Stealth</div>
+              <div className="font-bold text-purple-400">{selectedRedUnit.stealth}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Atk Range</div>
+              <div className="font-bold text-amber-400">{redAttackRange} km</div>
+            </div>
+            <div className="text-center">
+              <div className="text-zinc-500">Fire Rate</div>
+              <div className="font-bold text-red-400">{selectedRedUnit.fireRate}/min</div>
+            </div>
+          </div>
+
+          {/* Optional Attachments */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+            <div>
+              <label className="text-[9px] text-zinc-400 block mb-0.5">Equipped Munition</label>
               <select
                 value={redMissileId}
                 onChange={(e) => setRedMissileId(e.target.value)}
-                className="w-full bg-zinc-950 text-[11px] text-zinc-200 border border-zinc-800 rounded p-1.5 outline-none"
+                className="w-full px-2 py-1 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-300"
               >
-                <option value="">Standard Internal Payload</option>
+                <option value="">Standard Onboard Loadout</option>
                 {missiles.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.missile} ({m.range}km)
@@ -288,13 +550,12 @@ export const BattleSimulatorView: React.FC<BattleSimulatorViewProps> = ({
                 ))}
               </select>
             </div>
-
             <div>
-              <label className="text-[10px] text-zinc-400 block mb-1">Electronic EW Pod</label>
+              <label className="text-[9px] text-zinc-400 block mb-0.5">EW / Radar System</label>
               <select
                 value={redSysId}
                 onChange={(e) => setRedSysId(e.target.value)}
-                className="w-full bg-zinc-950 text-[11px] text-zinc-200 border border-zinc-800 rounded p-1.5 outline-none"
+                className="w-full px-2 py-1 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-300"
               >
                 <option value="">Integrated Avionics</option>
                 {electronicSystems.map((s) => (
@@ -305,227 +566,305 @@ export const BattleSimulatorView: React.FC<BattleSimulatorViewProps> = ({
               </select>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Quick unit specs pill */}
-          <div className="p-2.5 bg-zinc-950 rounded-lg border border-zinc-800/80 text-[11px] font-mono text-zinc-400 space-y-1">
-            <div className="flex justify-between">
-              <span>Hull Armor: <strong className="text-white">{selectedRedUnit.armor} HP</strong></span>
-              <span>Speed: <strong className="text-cyan-400">{selectedRedUnit.speed} km/h</strong></span>
+      {/* Engagement Range & Distance Slider */}
+      <div className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-xl space-y-2">
+        <div className="flex items-center justify-between font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-amber-400" />
+            <span className="font-bold text-zinc-200">TACTICAL ENGAGEMENT DISTANCE</span>
+            <span className="text-[11px] text-zinc-400">(Attack Range constraint rule)</span>
+          </div>
+          <span className="text-base font-bold text-amber-400">{distanceKm} KM</span>
+        </div>
+
+        <input
+          type="range"
+          min={5}
+          max={240}
+          step={5}
+          value={distanceKm}
+          onChange={(e) => {
+            setDistanceKm(Number(e.target.value));
+            setSimResult(null);
+          }}
+          className="w-full accent-amber-500 cursor-pointer"
+        />
+
+        <div className="flex items-center justify-between text-[11px] font-mono">
+          <span className={`flex items-center gap-1 ${blueInRange ? 'text-emerald-400 font-bold' : 'text-red-400'}`}>
+            <span className={`w-2 h-2 rounded-full ${blueInRange ? 'bg-emerald-400' : 'bg-red-400'}`} />
+            BLUE: {blueInRange ? 'TARGET IN ENGAGEMENT ENVELOPE' : `OUT OF RANGE (${blueAttackRange}km max)`}
+          </span>
+          <span className={`flex items-center gap-1 ${redInRange ? 'text-emerald-400 font-bold' : 'text-red-400'}`}>
+            <span className={`w-2 h-2 rounded-full ${redInRange ? 'bg-emerald-400' : 'bg-red-400'}`} />
+            RED: {redInRange ? 'TARGET IN ENGAGEMENT ENVELOPE' : `OUT OF RANGE (${redAttackRange}km max)`}
+          </span>
+        </div>
+      </div>
+
+      {/* Theoretical Stat Formula Breakdown Matrix */}
+      <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-3 font-mono text-xs">
+        <div className="flex items-center gap-2 pb-2 border-b border-zinc-800 text-zinc-300 font-bold">
+          <Cpu className="w-4 h-4 text-cyan-400" />
+          <span>STAT-DRIVEN FORMULA RESOLUTION MATRIX (PRE-ENGAGEMENT PROJECTION)</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          {/* 1. Detection Probability */}
+          <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-lg space-y-1">
+            <div className="text-[10px] text-zinc-500 uppercase">1. Detection P(detect)</div>
+            <div className="text-[11px] text-zinc-400">Sensors vs Stealth formula</div>
+            <div className="pt-1 flex justify-between">
+              <span className="text-cyan-400">Blue: {(blueDetectProb.pTotal * 100).toFixed(1)}%</span>
+              <span className="text-red-400">Red: {(redDetectProb.pTotal * 100).toFixed(1)}%</span>
             </div>
-            <div className="flex justify-between">
-              <span>Attack Range: <strong className="text-amber-400">{selectedRedUnit.attackRange} km</strong></span>
-              <span>Stealth: <strong className="text-purple-400">{selectedRedUnit.stealth}%</strong></span>
+            <div className="text-[9px] text-zinc-500">
+              P = clamp(0.50 + 0.005*(S - St), 0.10, 0.95)
+            </div>
+          </div>
+
+          {/* 2. Hit Probability */}
+          <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-lg space-y-1">
+            <div className="text-[10px] text-zinc-500 uppercase">2. Hit P(hit)</div>
+            <div className="text-[11px] text-zinc-400">Sensors, Maneuver & Speed</div>
+            <div className="pt-1 flex justify-between">
+              <span className="text-cyan-400">Blue: {(blueHitProb * 100).toFixed(1)}%</span>
+              <span className="text-red-400">Red: {(redHitProb * 100).toFixed(1)}%</span>
+            </div>
+            <div className="text-[9px] text-zinc-500">
+              0.50 + 0.002ΔS + 0.002ΔM + 0.001ΔSpd
+            </div>
+          </div>
+
+          {/* 3. Damage & Mitigation */}
+          <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-lg space-y-1">
+            <div className="text-[10px] text-zinc-500 uppercase">3. Damage / Hit</div>
+            <div className="text-[11px] text-zinc-400">Attack Power vs Resistance</div>
+            <div className="pt-1 flex justify-between">
+              <span className="text-cyan-400">Blue: {blueDmgCalc.finalDamage} HP</span>
+              <span className="text-red-400">Red: {redDmgCalc.finalDamage} HP</span>
+            </div>
+            <div className="text-[9px] text-zinc-500">
+              Damage = Raw * (100 / (100 + Res))
+            </div>
+          </div>
+
+          {/* 4. Expected DPS per Salvo */}
+          <div className="p-3 bg-zinc-900/60 border border-zinc-800/80 rounded-lg space-y-1">
+            <div className="text-[10px] text-zinc-500 uppercase">4. Expected Damage/Shot</div>
+            <div className="text-[11px] text-zinc-400">Damage * P(hit)</div>
+            <div className="pt-1 flex justify-between font-bold">
+              <span className="text-cyan-400">{(blueDmgCalc.finalDamage * blueHitProb).toFixed(1)} HP</span>
+              <span className="text-red-400">{(redDmgCalc.finalDamage * redHitProb).toFixed(1)} HP</span>
+            </div>
+            <div className="text-[9px] text-zinc-500">
+              Fire Rate: B:{selectedBlueUnit.fireRate}/min • R:{selectedRedUnit.fireRate}/min
             </div>
           </div>
         </div>
       </div>
 
-      {/* Comparative Matrix for all 10 Rule Parameters */}
-      <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-xs font-bold uppercase tracking-wider text-zinc-200 flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-amber-400" />
-            <span>10-FIELD TACTICAL TELEMETRY COMPARISON</span>
-          </span>
-          <span className="text-[10px] font-mono text-zinc-500">
-            Airtable Field Values Mapped
-          </span>
+      {/* Monte Carlo Results Card (if calculated) */}
+      {monteCarlo && (
+        <div className="p-5 bg-cyan-950/20 border border-cyan-500/50 rounded-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-cyan-500/30 pb-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-cyan-400" />
+              <h3 className="font-mono text-sm font-bold text-white">
+                MONTE CARLO OUTCOME PROBABILITY (300 STOCHASTIC SIMULATIONS)
+              </h3>
+            </div>
+            <span className="text-xs font-mono text-cyan-300">
+              {monteCarlo.iterations} Independent Engagements Executed
+            </span>
+          </div>
+
+          {/* Probability Distribution Bar */}
+          <div className="space-y-1 font-mono text-xs">
+            <div className="flex justify-between text-xs">
+              <span className="text-cyan-400 font-bold">Blue Victory: {monteCarlo.pBlueVictory}%</span>
+              <span className="text-zinc-400">Stalemate: {monteCarlo.pDraw}%</span>
+              <span className="text-red-400 font-bold">Red Victory: {monteCarlo.pRedVictory}%</span>
+            </div>
+            <div className="w-full h-4 bg-zinc-950 rounded-full overflow-hidden flex border border-zinc-800">
+              <div
+                style={{ width: `${monteCarlo.pBlueVictory}%` }}
+                className="bg-cyan-500 h-full transition-all duration-500"
+              />
+              <div
+                style={{ width: `${monteCarlo.pDraw}%` }}
+                className="bg-zinc-600 h-full transition-all duration-500"
+              />
+              <div
+                style={{ width: `${monteCarlo.pRedVictory}%` }}
+                className="bg-red-500 h-full transition-all duration-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono">
+            <div className="p-2.5 bg-zinc-950/80 rounded border border-zinc-800">
+              <div className="text-zinc-500">Blue Wins</div>
+              <div className="text-lg font-bold text-cyan-400">{monteCarlo.blueVictories} / 300</div>
+            </div>
+            <div className="p-2.5 bg-zinc-950/80 rounded border border-zinc-800">
+              <div className="text-zinc-500">Red Wins</div>
+              <div className="text-lg font-bold text-red-400">{monteCarlo.redVictories} / 300</div>
+            </div>
+            <div className="p-2.5 bg-zinc-950/80 rounded border border-zinc-800">
+              <div className="text-zinc-500">Avg Rounds to Finish</div>
+              <div className="text-lg font-bold text-amber-400">{monteCarlo.avgRoundsToFinish} Rounds</div>
+            </div>
+            <div className="p-2.5 bg-zinc-950/80 rounded border border-zinc-800">
+              <div className="text-zinc-500">Avg Blue Survivors</div>
+              <div className="text-lg font-bold text-emerald-400">{monteCarlo.avgBlueSurvivors} / {blueCount}</div>
+            </div>
+          </div>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 text-xs font-mono">
-          {RULE_SEQUENCE.map((rule) => {
-            const blueVal = selectedBlueUnit[rule.key as keyof AirForceUnit] as number;
-            const redVal = selectedRedUnit[rule.key as keyof AirForceUnit] as number;
-            const isBlueHigher = blueVal > redVal;
-            const isRedHigher = redVal > blueVal;
-
-            return (
-              <div key={rule.key} className="p-2.5 bg-zinc-950 rounded-lg border border-zinc-800 flex flex-col justify-between">
-                <div className="flex items-center justify-between text-zinc-400 text-[10px] mb-1">
-                  <span className="flex items-center gap-1 font-bold">
-                    <rule.icon className="w-3 h-3 text-zinc-500" />
-                    {rule.label}
-                  </span>
-                  <span className="text-[9px] text-zinc-600">{rule.unit}</span>
-                </div>
-
-                <div className="flex items-center justify-between my-1">
-                  <span className={`font-bold ${isBlueHigher ? 'text-blue-400' : 'text-zinc-400'}`}>
-                    {blueVal}
-                  </span>
-                  <span className="text-[9px] text-zinc-600">vs</span>
-                  <span className={`font-bold ${isRedHigher ? 'text-red-400' : 'text-zinc-400'}`}>
-                    {redVal}
-                  </span>
-                </div>
-
-                <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden flex">
-                  <div
-                    className="bg-blue-500 h-full"
-                    style={{ width: `${(blueVal / (blueVal + redVal || 1)) * 100}%` }}
-                  />
-                  <div
-                    className="bg-red-500 h-full"
-                    style={{ width: `${(redVal / (blueVal + redVal || 1)) * 100}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Interactive Simulation Playback Area */}
-      {simResult && currentRound && (
-        <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-4 shadow-xl">
-          {/* Header & Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+      {/* Single Battle Interactive Timeline & Individual HP View */}
+      {simResult && (
+        <div className="p-5 bg-zinc-900/90 border border-zinc-800 rounded-xl space-y-5">
+          {/* Winner Header */}
+          <div
+            className={`p-4 rounded-xl border flex items-center justify-between ${
+              simResult.winner === 'blue'
+                ? 'bg-cyan-950/40 border-cyan-500/60'
+                : simResult.winner === 'red'
+                ? 'bg-red-950/40 border-red-500/60'
+                : 'bg-zinc-900 border-zinc-700'
+            }`}
+          >
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
-                  ENGAGEMENT PHASE {activeRoundIndex + 1} OF {simResult.rounds.length}:
-                </span>
-                <span className="text-xs font-mono font-bold text-white bg-zinc-800 px-2 py-0.5 rounded">
-                  {currentRound.phaseName}
-                </span>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+                Engagement Outcome
               </div>
-              <p className="text-[11px] font-mono text-zinc-400 mt-0.5">
-                Target Separation: <strong className="text-amber-300">{currentRound.distanceKm.toFixed(0)} km</strong>
-              </p>
+              <h3 className="text-base font-bold font-mono text-white flex items-center gap-2">
+                {simResult.winner === 'blue' && <CheckCircle2 className="w-5 h-5 text-cyan-400" />}
+                {simResult.winner === 'red' && <AlertOctagon className="w-5 h-5 text-red-400" />}
+                {simResult.winner === 'blue'
+                  ? 'BLUE FORCES VICTORIOUS'
+                  : simResult.winner === 'red'
+                  ? 'RED FORCES VICTORIOUS'
+                  : 'TACTICAL DRAW'}
+              </h3>
+              <p className="text-xs text-zinc-300 font-sans mt-0.5">{simResult.winningReason}</p>
             </div>
 
+            <div className="text-right font-mono">
+              <div className="text-xs text-zinc-400">Final Active Units</div>
+              <div className="text-sm font-bold">
+                <span className="text-cyan-400">{simResult.blueFinalActive}</span> vs{' '}
+                <span className="text-red-400">{simResult.redFinalActive}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stepper Controls */}
+          <div className="flex items-center justify-between bg-zinc-950 p-2 rounded-xl border border-zinc-800">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setActiveRoundIndex((p) => Math.max(0, p - 1))}
-                disabled={activeRoundIndex === 0}
-                className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-xs font-mono text-zinc-200 rounded cursor-pointer"
-              >
-                Previous
-              </button>
-
-              <button
                 onClick={() => setIsPlaying(!isPlaying)}
-                className={`px-3 py-1.5 rounded text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer ${
-                  isPlaying ? 'bg-amber-600 text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
-                }`}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-mono text-xs font-bold rounded flex items-center gap-1.5 cursor-pointer"
               >
-                {isPlaying ? 'PAUSE' : 'AUTO-PLAY'}
-              </button>
-
-              <button
-                onClick={() => setActiveRoundIndex((p) => Math.min(simResult.rounds.length - 1, p + 1))}
-                disabled={activeRoundIndex === simResult.rounds.length - 1}
-                className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-xs font-mono text-zinc-200 rounded cursor-pointer"
-              >
-                Next
+                {isPlaying ? <RotateCcw className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{isPlaying ? 'Pause' : 'Play Timeline'}</span>
               </button>
 
               <button
                 onClick={() => setActiveRoundIndex(0)}
-                className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded cursor-pointer"
-                title="Reset simulation playback"
+                className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-mono text-xs rounded cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4" />
+                Reset
               </button>
             </div>
-          </div>
 
-          {/* Dynamic Health & Ammo Meters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Blue status */}
-            <div className="p-3 bg-zinc-950 rounded-lg border border-blue-900/60 font-mono text-xs space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-blue-400">{simResult.blueUnit.aircraft}</span>
-                <span className="text-zinc-400">
-                  Hull: <strong className="text-white">{currentRound.blueArmorAfter.toFixed(0)}</strong> / {simResult.blueInitialArmor} HP
-                </span>
-              </div>
-              <div className="w-full bg-zinc-800 h-2.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-blue-500 h-full transition-all duration-300"
-                  style={{ width: `${Math.max(0, (currentRound.blueArmorAfter / simResult.blueInitialArmor) * 100)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] text-zinc-400">
-                <span>Munitions Remaining: {currentRound.blueAmmoAfter} / {simResult.blueUnit.weaponCapacity}</span>
-                <span className="text-emerald-400">
-                  Damage Taken: {(simResult.blueInitialArmor - currentRound.blueArmorAfter).toFixed(0)} HP
-                </span>
-              </div>
-            </div>
-
-            {/* Red status */}
-            <div className="p-3 bg-zinc-950 rounded-lg border border-red-900/60 font-mono text-xs space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-red-400">{simResult.redUnit.aircraft}</span>
-                <span className="text-zinc-400">
-                  Hull: <strong className="text-white">{currentRound.redArmorAfter.toFixed(0)}</strong> / {simResult.redInitialArmor} HP
-                </span>
-              </div>
-              <div className="w-full bg-zinc-800 h-2.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-red-500 h-full transition-all duration-300"
-                  style={{ width: `${Math.max(0, (currentRound.redArmorAfter / simResult.redInitialArmor) * 100)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] text-zinc-400">
-                <span>Munitions Remaining: {currentRound.redAmmoAfter} / {simResult.redUnit.weaponCapacity}</span>
-                <span className="text-emerald-400">
-                  Damage Taken: {(simResult.redInitialArmor - currentRound.redArmorAfter).toFixed(0)} HP
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Step-by-Step Rule Execution Logs for the Active Round */}
-          <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800 space-y-2">
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-red-400" />
-              <span>ROUND {activeRoundIndex + 1} STEP-BY-STEP RULE RESOLUTION</span>
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
-              {currentRound.logs.map((step, idx) => (
-                <div key={idx} className="p-2.5 bg-zinc-900/90 rounded border border-zinc-800/80">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-amber-400 font-bold uppercase text-[10px]">
-                      {step.stepName}
-                    </span>
-                    <span className="text-[10px] text-zinc-500">{step.description}</span>
-                  </div>
-                  <p className="text-zinc-300 text-[11px] font-sans leading-tight mb-1.5">
-                    {step.detail}
-                  </p>
-                  <div className="flex justify-between text-[9px] text-zinc-400 pt-1 border-t border-zinc-800">
-                    <span className="text-blue-400">{step.metricA}</span>
-                    <span className="text-red-400">{step.metricB}</span>
-                  </div>
-                </div>
+            {/* Round Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto">
+              {simResult.rounds.map((r, idx) => (
+                <button
+                  key={r.roundNumber}
+                  onClick={() => {
+                    setIsPlaying(false);
+                    setActiveRoundIndex(idx);
+                  }}
+                  className={`px-2.5 py-1 rounded text-xs font-mono transition-all cursor-pointer ${
+                    activeRoundIndex === idx
+                      ? 'bg-red-600 text-white font-bold'
+                      : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                  }`}
+                >
+                  R{r.roundNumber} ({r.distanceKm}km)
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Combat Outcome if Completed or Final Round */}
-          {activeRoundIndex === simResult.rounds.length - 1 && (
-            <div className={`p-4 rounded-xl border font-mono text-xs space-y-2 ${
-              simResult.winner === 'blue'
-                ? 'bg-blue-950/40 border-blue-500 text-blue-200'
-                : simResult.winner === 'red'
-                ? 'bg-red-950/40 border-red-500 text-red-200'
-                : 'bg-zinc-900 border-zinc-700 text-zinc-300'
-            }`}>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-amber-400" />
-                <h4 className="text-sm font-bold uppercase tracking-wider">
-                  ENGAGEMENT RESOLUTION: {simResult.winner.toUpperCase()} FORCE VICTORIOUS
-                </h4>
+          {/* Round Snapshot */}
+          {activeRound && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs">
+                <div className="p-3 bg-zinc-950/80 rounded-lg border border-zinc-800">
+                  <div className="text-zinc-500">Round Distance</div>
+                  <div className="text-base font-bold text-amber-400">{activeRound.distanceKm} km</div>
+                </div>
+                <div className="p-3 bg-zinc-950/80 rounded-lg border border-zinc-800">
+                  <div className="text-zinc-500">Active Units</div>
+                  <div className="text-base font-bold">
+                    <span className="text-cyan-400">{activeRound.blueActiveCount} Blue</span> vs{' '}
+                    <span className="text-red-400">{activeRound.redActiveCount} Red</span>
+                  </div>
+                </div>
+                <div className="p-3 bg-zinc-950/80 rounded-lg border border-zinc-800">
+                  <div className="text-zinc-500">Damage Exchanged</div>
+                  <div className="text-base font-bold">
+                    <span className="text-cyan-400">{activeRound.blueDamageDealt}</span> /{' '}
+                    <span className="text-red-400">{activeRound.redDamageDealt}</span>
+                  </div>
+                </div>
+                <div className="p-3 bg-zinc-950/80 rounded-lg border border-zinc-800">
+                  <div className="text-zinc-500">Units Destroyed This Round</div>
+                  <div className="text-base font-bold text-red-400">
+                    -{activeRound.blueUnitsLostThisRound} Blue / -{activeRound.redUnitsLostThisRound} Red
+                  </div>
+                </div>
               </div>
-              <p className="font-sans text-sm">{simResult.winningReason}</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-zinc-800/80 text-[11px]">
-                <div>Blue Hit Ratio: <strong>{simResult.combatEfficiency.blueHitRate}%</strong></div>
-                <div>Red Hit Ratio: <strong>{simResult.combatEfficiency.redHitRate}%</strong></div>
-                <div>Blue Damage: <strong>{simResult.combatEfficiency.blueDamageDealt} HP</strong></div>
-                <div>Red Damage: <strong>{simResult.combatEfficiency.redDamageDealt} HP</strong></div>
+
+              {/* Combat Log for Current Round */}
+              <div className="space-y-2">
+                <div className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                  Tactical Engagement Feed — Round {activeRound.roundNumber}
+                </div>
+                <div className="p-3 bg-zinc-950 rounded-lg border border-zinc-800 max-h-56 overflow-y-auto space-y-1.5 font-mono text-xs">
+                  {activeRound.logs.map((log, lIdx) => (
+                    <div
+                      key={lIdx}
+                      className={`flex items-start justify-between py-1 px-2 rounded border ${
+                        log.attackerSide === 'blue'
+                          ? 'bg-cyan-950/20 border-cyan-500/20 text-cyan-200'
+                          : 'bg-red-950/20 border-red-500/20 text-red-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-zinc-500">+{log.timestampSec}s</span>
+                        <span className="font-bold">[{log.attackerName}]</span>
+                        <span>→ {log.defenderName}:</span>
+                        <span>{log.summary}</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-400 shrink-0">
+                        {log.hitLanded ? (
+                          <span className="text-emerald-400 font-bold">-{log.finalDamageDealt} HP</span>
+                        ) : (
+                          <span className="text-zinc-500">MISSED</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

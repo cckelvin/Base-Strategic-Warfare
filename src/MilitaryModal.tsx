@@ -1,245 +1,239 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Shield,
+  Plane,
+  Ship,
+  Rocket,
+  Package,
   Radio,
-  Activity,
-  Boxes,
-  BarChart3,
   Flame,
   Crosshair,
-  Radar,
-  ChevronRight,
-  MapPin,
-  Lock,
-  Unlock,
-  AlertTriangle,
-  CheckCircle2,
-  Cpu,
-  ArrowUpRight,
-  TrendingUp,
   Search,
+  MapPin,
+  Swords,
+  ArrowUpRight,
+  Lock,
+  CheckCircle2,
+  AlertTriangle,
+  ChevronRight,
   Database,
+  Plus,
+  Hammer,
 } from 'lucide-react';
-import { MILITARY_BASES, MilitaryBase } from './militaryBases';
+import { getAllMilitaryBases, saveConstructedBase, MilitaryBase } from './militaryBases';
 import { CountryFlag } from './countries';
 import { AiCountryAgent } from './aiLearningSystem';
 import { BattleSimulatorView } from './BattleSimulatorView';
 import { AirtableArsenalView } from './AirtableArsenalView';
+import { AIRTABLE_TABLES } from './militaryAirtableDatabase';
+import { STRATEGIC_CITIES } from './citiesData';
 
 export type MilitaryTab =
   | 'base'
   | 'warfare'
-  | 'arsenal'
-  | 'intel'
-  | 'activity'
-  | 'units'
-  | 'stats'
-  | 'programs';
-
-interface MilitaryProgram {
-  id: string;
-  name: string;
-  codename: string;
-  description: string;
-  cost: number;
-  level: number;
-  maxLevel: number;
-  progress: number; // 0-100%
-  category: 'aerospace' | 'laser' | 'space' | 'drone' | 'cyber' | 'naval';
-  benefit: string;
-}
-
-const DEFAULT_PROGRAMS: MilitaryProgram[] = [
-  {
-    id: 'prog-hypersonic',
-    name: 'Hypersonic Glide Vehicle (HGV)',
-    codename: 'PROJECT SLEDGEHAMMER',
-    description: 'Mach 8+ boost-glide atmospheric strike vectors capable of bypassing terminal defense radars.',
-    cost: 45000000,
-    level: 1,
-    maxLevel: 5,
-    progress: 40,
-    category: 'aerospace',
-    benefit: '+25% Strike Readiness, Global Rapid Response',
-  },
-  {
-    id: 'prog-directed-energy',
-    name: 'Directed Energy Laser Array',
-    codename: 'HELIOS COUNTER-UAS',
-    description: 'High-power 150kW fiber-optic laser turrets for instantaneous speed-of-light drone & rocket interception.',
-    cost: 35000000,
-    level: 2,
-    maxLevel: 5,
-    progress: 75,
-    category: 'laser',
-    benefit: '+30% Base Interception Ratio, Zero Munition Cost',
-  },
-  {
-    id: 'prog-leo-recon',
-    name: 'Low-Earth Orbit Recon Constellation',
-    codename: 'AEGIS ORBITAL EYE',
-    description: 'Synthetic Aperture Radar (SAR) and infrared micro-satellite constellation with 5-minute revisit rates.',
-    cost: 50000000,
-    level: 2,
-    maxLevel: 5,
-    progress: 60,
-    category: 'space',
-    benefit: 'Full Radar Transparency over Foreign Nations',
-  },
-  {
-    id: 'prog-drone-swarm',
-    name: 'Autonomous Collaborative Drone Swarm',
-    codename: 'VALKYRIE SQUADRON',
-    description: 'AI-guided loyal wingman uncrewed combat aerial vehicles operating with distributed mesh tactical decision logic.',
-    cost: 30000000,
-    level: 1,
-    maxLevel: 5,
-    progress: 25,
-    category: 'drone',
-    benefit: '+45% Air Superiority in Contested Sectors',
-  },
-  {
-    id: 'prog-quantum-cyber',
-    name: 'Quantum-Resistant Comms Mesh',
-    codename: 'CIPHER BLACK',
-    description: 'Post-quantum cryptographic key distribution network protecting all theater commands from electronic spoofing.',
-    cost: 28000000,
-    level: 3,
-    maxLevel: 5,
-    progress: 85,
-    category: 'cyber',
-    benefit: '100% Jamming Resistance, Instant Telemetry',
-  },
-  {
-    id: 'prog-ocean-acoustic',
-    name: 'Deep Ocean Acoustic Barrier',
-    codename: 'NEPTUNE SONAR WALL',
-    description: 'Sub-surface acoustic hydrophone array on continental shelves detecting nuclear attack submarines.',
-    cost: 40000000,
-    level: 1,
-    maxLevel: 5,
-    progress: 15,
-    category: 'naval',
-    benefit: 'Immunity to Submarine-Launched Cruise Missiles',
-  },
-];
+  | 'air_force'
+  | 'navy'
+  | 'ground'
+  | 'missiles'
+  | 'equipment'
+  | 'electronic'
+  | 'launchers';
 
 interface MilitaryModalProps {
   userCountry: CountryFlag;
   money: number;
   aiAgents: Record<string, AiCountryAgent>;
+  occupiedCityIds?: string[];
+  occupiedBaseIds?: string[];
+  onToggleOccupyBase?: (baseId: string) => void;
   onDeductMoney: (amount: number) => void;
   onAddNotification: (title: string, message: string) => void;
-  onFlyToBase: (lat: number, lng: number, zoom?: number) => void;
   onClose: () => void;
+  onFlyToBase: (lat: number, lng: number, zoom?: number) => void;
 }
 
 export const MilitaryModal: React.FC<MilitaryModalProps> = ({
   userCountry,
   money,
-  aiAgents,
+  occupiedCityIds = [],
+  occupiedBaseIds = [],
+  onToggleOccupyBase,
   onDeductMoney,
   onAddNotification,
-  onFlyToBase,
   onClose,
+  onFlyToBase,
 }) => {
+  // Navigation tab state
   const [activeTab, setActiveTab] = useState<MilitaryTab>('base');
-  const [baseSearch, setBaseSearch] = useState<string>('');
-  const [selectedBaseFilter, setSelectedBaseFilter] = useState<'all' | 'mine' | 'alert'>('all');
-  const [selectedBaseDetail, setSelectedBaseDetail] = useState<MilitaryBase | null>(null);
 
-  // Military Programs State with Persistence
-  const [programs, setPrograms] = useState<MilitaryProgram[]>(() => {
-    const saved = localStorage.getItem('base_warfare_military_programs');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        // fallback
-      }
-    }
-    return DEFAULT_PROGRAMS;
-  });
+  // Search & filter in Bases
+  const [baseSearch, setBaseSearch] = useState('');
+  const [baseFilter, setBaseFilter] = useState<'all' | 'sovereign' | 'occupied'>('all');
 
-  // Base Fortifications State (allows user to fortify any base with money)
+  // Seize new base expedition modal
+  const [isSeizeModalOpen, setIsSeizeModalOpen] = useState(false);
+  const [targetSearch, setTargetSearch] = useState('');
+
+  // Fortified bases state
   const [fortifiedBases, setFortifiedBases] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem('base_warfare_fortified_bases');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        // fallback
-      }
-    }
-    return {};
+    return saved ? JSON.parse(saved) : {};
   });
 
-  // Save programs whenever modified
-  useEffect(() => {
-    localStorage.setItem('base_warfare_military_programs', JSON.stringify(programs));
-  }, [programs]);
+  // Base state with construction support
+  const [allBases, setAllBases] = useState<MilitaryBase[]>(() => getAllMilitaryBases());
 
-  // Handle escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  // Base construction modal state
+  const [isConstructModalOpen, setIsConstructModalOpen] = useState(false);
+  const [newBaseName, setNewBaseName] = useState('');
+  const [newBaseCodeName, setNewBaseCodeName] = useState('');
+  const [newBaseSector, setNewBaseSector] = useState<'north' | 'south' | 'east' | 'west' | 'coastal'>('north');
+  const [newBaseType, setNewBaseType] = useState<'air' | 'naval' | 'ground' | 'air-defense'>('air');
 
-  // Filter bases
-  const filteredBases = MILITARY_BASES.filter((b) => {
+  // Calculate occupied country codes from occupied cities
+  const occupiedCountryCodes = new Set(
+    STRATEGIC_CITIES.filter((c) => occupiedCityIds.includes(c.id)).map((c) =>
+      c.countryCode.toUpperCase()
+    )
+  );
+
+  // BASE RESTRICTION REQUIREMENT:
+  // "All countries must have 1 base in their capital only but can build more in other parts of their land"
+  // "you only see the base that belongs to your country or occupied\seized territory"
+  const viewableBases = allBases.filter((b) => {
+    const isSovereign =
+      b.countryCode.toUpperCase() === userCountry.code.toUpperCase() ||
+      b.countryName.toLowerCase() === userCountry.name.toLowerCase();
+    const isOccupied =
+      occupiedBaseIds.includes(b.id) ||
+      occupiedCountryCodes.has(b.countryCode.toUpperCase());
+    return isSovereign || isOccupied;
+  });
+
+  // Search & tab filter on viewable bases
+  const filteredBases = viewableBases.filter((b) => {
     const matchesSearch =
       b.name.toLowerCase().includes(baseSearch.toLowerCase()) ||
-      b.countryName.toLowerCase().includes(baseSearch.toLowerCase()) ||
-      b.codeName.toLowerCase().includes(baseSearch.toLowerCase());
-
+      b.codeName.toLowerCase().includes(baseSearch.toLowerCase()) ||
+      b.countryName.toLowerCase().includes(baseSearch.toLowerCase());
     if (!matchesSearch) return false;
 
-    if (selectedBaseFilter === 'mine') {
-      return b.countryCode === userCountry.code;
-    }
-    if (selectedBaseFilter === 'alert') {
-      return b.status === 'Alert';
-    }
+    const isSovereign =
+      b.countryCode.toUpperCase() === userCountry.code.toUpperCase() ||
+      b.countryName.toLowerCase() === userCountry.name.toLowerCase();
+    const isOccupied =
+      occupiedBaseIds.includes(b.id) ||
+      occupiedCountryCodes.has(b.countryCode.toUpperCase());
+
+    if (baseFilter === 'sovereign') return isSovereign;
+    if (baseFilter === 'occupied') return isOccupied;
     return true;
   });
 
-  // Upgrade / Fund Program
-  const handleFundProgram = (prog: MilitaryProgram) => {
-    if (money < prog.cost) {
-      alert(`Insufficient funds. $${(prog.cost / 1e6).toFixed(1)}M required.`);
+  // Foreign bases available to conquer/seize (for the Expedition Annex dialog)
+  const conquerableBases = allBases.filter((b) => {
+    const isSovereign =
+      b.countryCode.toUpperCase() === userCountry.code.toUpperCase() ||
+      b.countryName.toLowerCase() === userCountry.name.toLowerCase();
+    const isOccupied =
+      occupiedBaseIds.includes(b.id) ||
+      occupiedCountryCodes.has(b.countryCode.toUpperCase());
+    return !isSovereign && !isOccupied;
+  }).filter(
+    (b) =>
+      b.name.toLowerCase().includes(targetSearch.toLowerCase()) ||
+      b.countryName.toLowerCase().includes(targetSearch.toLowerCase())
+  );
+
+  // Construct Base in Domestic Territory Action
+  const handleConstructBase = () => {
+    const cost = 25000000;
+    if (money < cost) {
+      alert('Insufficient funds. Constructing a regional military bastion requires $25,000,000.');
       return;
     }
-    onDeductMoney(prog.cost);
 
-    setPrograms((prev) =>
-      prev.map((p) => {
-        if (p.id === prog.id) {
-          const nextProgress = Math.min(100, p.progress + 25);
-          const nextLevel = nextProgress >= 100 && p.level < p.maxLevel ? p.level + 1 : p.level;
-          const resetProgress = nextProgress >= 100 && p.level < p.maxLevel ? 0 : nextProgress;
-          return {
-            ...p,
-            level: nextLevel,
-            progress: resetProgress,
-          };
-        }
-        return p;
-      })
+    const defaultName = newBaseName.trim() || `${userCountry.name} Regional Redoubt`;
+    const defaultCode = newBaseCodeName.trim().toUpperCase() || `${newBaseSector.toUpperCase()} AEGIS`;
+
+    // Calculate realistic offset coordinates from homeland
+    const sovereignBase = allBases.find(
+      (b) => b.countryCode.toUpperCase() === userCountry.code.toUpperCase() && b.isCapital
     );
+    const centerLat = sovereignBase ? sovereignBase.lat : 30.0;
+    const centerLng = sovereignBase ? sovereignBase.lng : 10.0;
+
+    let offsetLat = 0;
+    let offsetLng = 0;
+    switch (newBaseSector) {
+      case 'north':
+        offsetLat = 1.8;
+        offsetLng = 0.5;
+        break;
+      case 'south':
+        offsetLat = -1.8;
+        offsetLng = -0.5;
+        break;
+      case 'east':
+        offsetLat = 0.4;
+        offsetLng = 2.2;
+        break;
+      case 'west':
+        offsetLat = -0.4;
+        offsetLng = -2.2;
+        break;
+      case 'coastal':
+        offsetLat = 1.2;
+        offsetLng = 1.5;
+        break;
+    }
+
+    const newLat = Number((centerLat + offsetLat).toFixed(4));
+    const newLng = Number((centerLng + offsetLng).toFixed(4));
+
+    const newBase: MilitaryBase = {
+      id: `base-${userCountry.code.toLowerCase()}-custom-${Date.now()}`,
+      name: defaultName,
+      codeName: defaultCode,
+      countryName: userCountry.name,
+      countryCode: userCountry.code,
+      flagUrl: `https://flagcdn.com/w80/${userCountry.code.toLowerCase()}.png`,
+      lat: newLat,
+      lng: newLng,
+      dms: `${Math.abs(newLat).toFixed(2)}°${newLat >= 0 ? 'N' : 'S'} ${Math.abs(newLng).toFixed(2)}°${newLng >= 0 ? 'E' : 'W'}`,
+      status: 'Fortified',
+      isCapital: false,
+      reports: [
+        {
+          id: `rep-${Date.now()}-1`,
+          timeAgo: 'Just now',
+          type: 'defense',
+          text: `Construction of ${defaultName} completed in homeland territory. Perimeter sensors active.`,
+        },
+      ],
+      units: [
+        { id: `u-${Date.now()}-1`, name: 'Tactical Rapid Deployment Corps', count: 1800, type: 'infantry', code: 'DOMESTIC-VANGUARD' },
+        { id: `u-${Date.now()}-2`, name: 'Air Defense Interceptors', count: 36, type: 'aircraft', code: 'AIR-CORPS' },
+        { id: `u-${Date.now()}-3`, name: 'Armored Patrol Tanks', count: 48, type: 'armor', code: 'ARMOR-LINE' },
+        { id: `u-${Date.now()}-4`, name: 'Surface-to-Air Missile Shield', count: 12, type: 'air-defense', code: 'AEGIS-ARRAY' },
+      ],
+    };
+
+    saveConstructedBase(newBase);
+    onDeductMoney(cost);
+    setAllBases((prev) => [...prev, newBase]);
+    setIsConstructModalOpen(false);
+    setNewBaseName('');
+    setNewBaseCodeName('');
 
     onAddNotification(
-      'Military R&D Allocated',
-      `Commander allocated $${(prog.cost / 1e6).toFixed(1)}M to ${prog.name} (${prog.codename}). Readiness advanced.`
+      'Military Installation Established',
+      `${defaultName} established in sovereign territory. Ready for tactical stationing.`
     );
   };
 
-  // Fortify Base
+  // Fortify Base Action
   const handleFortifyBase = (base: MilitaryBase) => {
     const cost = 15000000;
     if (money < cost) {
@@ -255,140 +249,90 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
     });
 
     onAddNotification(
-      'Fortress Reinforced',
+      'Bastion Reinforced',
       `${base.name} upgraded to MAX FORTIFICATION status. Anti-air and perimeter shielding hardened.`
     );
   };
 
-  // Calculate aggregated stats across bases
-  const totalTroops = MILITARY_BASES.reduce((acc, b) => {
-    const infantry = b.units.filter((u) => u.type === 'infantry').reduce((s, u) => s + u.count, 0);
-    return acc + infantry;
-  }, 0);
+  // Seize / Occupy Base Action
+  const handleSeizeBase = (base: MilitaryBase) => {
+    if (onToggleOccupyBase) {
+      onToggleOccupyBase(base.id);
+    }
+    setIsSeizeModalOpen(false);
+  };
 
-  const totalAircraft = MILITARY_BASES.reduce((acc, b) => {
-    const air = b.units.filter((u) => u.type === 'aircraft').reduce((s, u) => s + u.count, 0);
-    return acc + air;
-  }, 0);
-
-  const totalArmor = MILITARY_BASES.reduce((acc, b) => {
-    const arm = b.units.filter((u) => u.type === 'armor').reduce((s, u) => s + u.count, 0);
-    return acc + arm;
-  }, 0);
-
-  const totalAirDefense = MILITARY_BASES.reduce((acc, b) => {
-    const ad = b.units.filter((u) => u.type === 'air-defense').reduce((s, u) => s + u.count, 0);
-    return acc + ad;
-  }, 0);
-
-  // All activities aggregated
-  const allReports = MILITARY_BASES.flatMap((b) =>
-    b.reports.map((r) => ({
-      ...r,
-      baseName: b.name,
-      baseCodeName: b.codeName,
-      countryName: b.countryName,
-      countryCode: b.countryCode,
-      flagUrl: b.flagUrl,
-      lat: b.lat,
-      lng: b.lng,
-    }))
-  ).sort((a, b) => {
-    const rank = { urgent: 0, defense: 1, intel: 2, logistics: 3 };
-    return rank[a.type] - rank[b.type];
-  });
+  // Navigation items: Strictly Base + Warfare (Rules & Sim) + 7 Airtable Tables
+  const NAV_ITEMS: { id: MilitaryTab; label: string; icon: React.FC<{ className?: string }> }[] = [
+    { id: 'base', label: 'Bases (Homeland & Seized)', icon: Shield },
+    { id: 'warfare', label: 'Warfare (Rules & Sim)', icon: Crosshair },
+    { id: 'air_force', label: 'Air Force', icon: Plane },
+    { id: 'navy', label: 'Navy', icon: Ship },
+    { id: 'ground', label: 'Ground', icon: Crosshair },
+    { id: 'missiles', label: 'Missiles', icon: Rocket },
+    { id: 'equipment', label: 'Equipment', icon: Package },
+    { id: 'electronic', label: 'Electronic Systems', icon: Radio },
+    { id: 'launchers', label: 'Launchers', icon: Flame },
+  ];
 
   return (
     <div
       id="military-full-modal"
-      className="fixed inset-0 z-50 flex flex-col bg-zinc-950/95 backdrop-blur-2xl text-zinc-100 font-sans select-none overflow-hidden animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex flex-col bg-zinc-950/98 backdrop-blur-2xl text-zinc-100 font-sans select-none overflow-hidden animate-in fade-in duration-200"
     >
-      {/* ================= TOP NOTCH NAVIGATION ================= */}
+      {/* ================= REQUIREMENT 1: ONLY THE NAV BAR REMAINS AT THE TOP BAR ================= */}
       <header
         id="military-top-notch-header"
-        className="relative flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3.5 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-950 border-b border-red-500/40 shadow-2xl shrink-0"
+        className="relative flex items-center justify-between px-3 sm:px-6 py-2.5 bg-gradient-to-b from-zinc-900 to-zinc-950 border-b border-zinc-800 shadow-xl shrink-0 gap-3"
       >
-        {/* Left: Commander & Status */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-red-950/80 border border-red-500/80 flex items-center justify-center text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.4)]">
-            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-black tracking-widest uppercase font-mono text-red-400">
-                GLOBAL MILITARY COMMAND
-              </span>
-              <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-red-950 border border-red-500/50 text-red-300">
-                DEFCON 2
-              </span>
-            </div>
-            <div className="text-[10px] sm:text-xs text-zinc-400 font-mono flex items-center gap-2">
-              <span>{userCountry.name}</span>
-              <span className="text-zinc-600">•</span>
-              <span className="text-emerald-400 font-bold">${(money / 1e6).toFixed(1)}M TREASURY</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Center: Top NAV Notch */}
-        <nav
-          id="military-nav-notch"
-          aria-label="Military Navigation Notch"
-          className="flex items-center gap-1 sm:gap-1.5 p-1 bg-zinc-900/90 border border-red-500/50 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.25)] overflow-x-auto max-w-[50vw] sm:max-w-none"
-        >
-          {(
-            [
-              { id: 'base', label: 'Base', icon: Shield },
-              { id: 'warfare', label: 'Warfare (Rules & Sim)', icon: Crosshair },
-              { id: 'arsenal', label: 'Airtable Arsenal (7)', icon: Database },
-              { id: 'intel', label: 'Intel', icon: Radar },
-              { id: 'activity', label: 'Activity', icon: Activity },
-              { id: 'units', label: 'Units', icon: Boxes },
-              { id: 'stats', label: 'Stats', icon: BarChart3 },
-              { id: 'programs', label: 'Programs', icon: Flame },
-            ] as const
-          ).map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                id={`mil-tab-${tab.id}`}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer whitespace-nowrap ${
-                  isActive
-                    ? 'bg-red-600 text-white shadow-lg border border-red-300/80 scale-102'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5 shrink-0" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Right: Close button */}
-        <div className="flex items-center gap-2">
-          <button
-            id="close-military-modal-btn"
-            onClick={onClose}
-            aria-label="Close Military Command"
-            title="Close Military Command (Esc)"
-            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-zinc-900 hover:bg-red-950 border border-zinc-700 hover:border-red-500 text-zinc-300 hover:text-white transition-all duration-150 cursor-pointer shadow-md"
+        {/* Centered Navigation Bar */}
+        <div className="flex-1 flex justify-center overflow-x-auto scrollbar-none py-0.5">
+          <nav
+            id="military-nav-notch"
+            aria-label="Military Command Navigation"
+            className="flex items-center gap-1 sm:gap-1.5 p-1 bg-zinc-900/90 border border-zinc-800 rounded-xl shadow-lg shrink-0 overflow-x-auto"
           >
-            <X className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
+            {NAV_ITEMS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  id={`mil-tab-${tab.id}`}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? 'bg-red-600 text-white shadow-md border border-red-400'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
+
+        {/* Clean Dismiss Button */}
+        <button
+          id="close-military-modal-btn"
+          onClick={onClose}
+          aria-label="Close Military Command"
+          title="Close Military Command (Esc)"
+          className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-zinc-900 hover:bg-red-950 border border-zinc-800 hover:border-red-500 text-zinc-300 hover:text-white transition-all cursor-pointer shadow shrink-0"
+        >
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
       </header>
 
       {/* ================= MAIN CONTENT VIEW ================= */}
       <main className="flex-1 overflow-y-auto p-3 sm:p-6 bg-zinc-950/80">
-        {/* TAB 1: BASE (Bases across countries) */}
+        {/* TAB 1: BASES (Strictly: Only your country or occupied/seized territory) */}
         {activeTab === 'base' && (
           <div id="mil-tab-base-content" className="max-w-7xl mx-auto space-y-4">
             {/* Header controls & filter */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-zinc-900/80 border border-zinc-800 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="relative flex-1 sm:w-72">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
@@ -396,565 +340,473 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
                     type="text"
                     value={baseSearch}
                     onChange={(e) => setBaseSearch(e.target.value)}
-                    placeholder="Search base, fortress, nation..."
+                    placeholder="Filter homeland or seized base..."
                     className="w-full pl-9 pr-3 py-1.5 bg-zinc-950 border border-zinc-700 rounded-lg text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-red-500"
                   />
                 </div>
                 <div className="text-xs font-mono text-zinc-400">
-                  <span className="text-red-400 font-bold">{filteredBases.length}</span> / {MILITARY_BASES.length} BASES
+                  <span className="text-emerald-400 font-bold">{filteredBases.length}</span> / {viewableBases.length} BASES UNDER COMMAND
                 </div>
               </div>
 
-              {/* Filter Pills */}
-              <div className="flex items-center gap-1.5 font-mono text-xs">
-                {(
-                  [
-                    { id: 'all', label: 'All Bases' },
-                    { id: 'mine', label: `${userCountry.code} Sovereign` },
-                    { id: 'alert', label: 'High Alert' },
-                  ] as const
-                ).map((f) => (
+              {/* Filter Pills & Conquer Expedition Button */}
+              <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
+                <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800">
                   <button
-                    key={f.id}
-                    onClick={() => setSelectedBaseFilter(f.id)}
-                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                      selectedBaseFilter === f.id
-                        ? 'bg-red-700 text-white font-bold border border-red-400'
-                        : 'bg-zinc-800/80 text-zinc-400 hover:text-white border border-zinc-700'
+                    onClick={() => setBaseFilter('all')}
+                    className={`px-2.5 py-1 rounded transition-all cursor-pointer ${
+                      baseFilter === 'all'
+                        ? 'bg-zinc-800 text-white font-bold'
+                        : 'text-zinc-400 hover:text-white'
                     }`}
                   >
-                    {f.label}
+                    All ({viewableBases.length})
                   </button>
-                ))}
+                  <button
+                    onClick={() => setBaseFilter('sovereign')}
+                    className={`px-2.5 py-1 rounded transition-all cursor-pointer ${
+                      baseFilter === 'sovereign'
+                        ? 'bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/50'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Homeland ({viewableBases.filter((b) => b.countryCode.toUpperCase() === userCountry.code.toUpperCase()).length})
+                  </button>
+                  <button
+                    onClick={() => setBaseFilter('occupied')}
+                    className={`px-2.5 py-1 rounded transition-all cursor-pointer ${
+                      baseFilter === 'occupied'
+                        ? 'bg-red-950 text-red-300 font-bold border border-red-500/50'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Seized ({viewableBases.filter((b) => b.countryCode.toUpperCase() !== userCountry.code.toUpperCase()).length})
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setIsConstructModalOpen(true)}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow"
+                >
+                  <Hammer className="w-3.5 h-3.5" />
+                  <span>+ Build Domestic Base</span>
+                </button>
+
+                <button
+                  onClick={() => setIsSeizeModalOpen(true)}
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow"
+                >
+                  <Swords className="w-3.5 h-3.5" />
+                  <span>Annex / Seize Base</span>
+                </button>
               </div>
             </div>
 
             {/* Bases Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {filteredBases.map((base) => {
-                const isFortified = fortifiedBases[base.id] || base.status === 'Fortified';
-                const isSovereign = base.countryCode === userCountry.code;
+            {filteredBases.length === 0 ? (
+              <div className="p-8 text-center bg-zinc-900/40 border border-zinc-800 rounded-xl space-y-2">
+                <Shield className="w-8 h-8 text-zinc-600 mx-auto" />
+                <h4 className="font-mono text-sm font-bold text-zinc-300">No matching bases in sovereign or seized territory</h4>
+                <p className="text-xs text-zinc-500 font-sans">
+                  Only military installations belonging to your nation ({userCountry.name}) or annexed expeditionary territory are displayed.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {filteredBases.map((base) => {
+                  const isFortified = fortifiedBases[base.id] || base.status === 'Fortified';
+                  const isSovereign =
+                    base.countryCode.toUpperCase() === userCountry.code.toUpperCase() ||
+                    base.countryName.toLowerCase() === userCountry.name.toLowerCase();
 
-                return (
-                  <div
-                    key={base.id}
-                    className={`relative flex flex-col p-4 rounded-xl border backdrop-blur-md transition-all duration-150 ${
-                      isSovereign
-                        ? 'bg-red-950/20 border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
-                        : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700'
-                    }`}
-                  >
-                    {/* Top Row: Name, Flag, Status */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={base.flagUrl}
-                          alt={base.countryName}
-                          className="w-5 h-3.5 rounded object-cover border border-zinc-700 shadow"
-                        />
-                        <div>
-                          <h3 className="font-bold text-sm text-zinc-100 font-mono tracking-tight leading-tight">
-                            {base.name}
-                          </h3>
-                          <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
-                            {base.countryName} • {base.codeName}
+                  return (
+                    <div
+                      key={base.id}
+                      className={`relative flex flex-col p-4 rounded-xl border backdrop-blur-md transition-all duration-150 ${
+                        isSovereign
+                          ? 'bg-zinc-900/90 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.08)]'
+                          : 'bg-red-950/20 border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+                      }`}
+                    >
+                      {/* Top Row: Name, Flag, Territory Badge */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={base.flagUrl}
+                            alt=""
+                            className="w-5 h-3.5 rounded object-cover shadow border border-zinc-700"
+                          />
+                          <div>
+                            <h4 className="font-mono text-xs font-bold text-zinc-100 truncate max-w-[180px]">
+                              {base.name}
+                            </h4>
+                            <div className="text-[10px] font-mono text-zinc-400">
+                              {base.countryName} • {base.codeName}
+                            </div>
                           </div>
                         </div>
+
+                        <div className="flex flex-col items-end gap-1">
+                          {isSovereign ? (
+                            <span className="flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50 uppercase">
+                              <Shield className="w-2.5 h-2.5" />
+                              SOVEREIGN
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-red-950 text-red-300 border border-red-500/50 uppercase">
+                              <Swords className="w-2.5 h-2.5" />
+                              SEIZED
+                            </span>
+                          )}
+
+                          {base.isCapital ? (
+                            <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/40 uppercase">
+                              ★ CAPITAL HQ
+                            </span>
+                          ) : isSovereign ? (
+                            <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 uppercase">
+                              EXPANSION REDOUBT
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
 
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase shrink-0 border ${
-                          isFortified
-                            ? 'bg-amber-950/80 text-amber-300 border-amber-500/60'
-                            : base.status === 'Alert'
-                            ? 'bg-red-950 text-red-300 border-red-500/80 animate-pulse'
-                            : 'bg-emerald-950 text-emerald-300 border-emerald-500/60'
-                        }`}
-                      >
-                        {isFortified ? 'Fortified' : base.status}
-                      </span>
-                    </div>
+                      {/* Coordinates */}
+                      <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 mb-3 bg-zinc-950/80 p-2 rounded border border-zinc-800/80">
+                        <span className="flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3 text-red-400 shrink-0" />
+                          {base.dms}
+                        </span>
+                        <span
+                          className={`font-bold uppercase ${
+                            isFortified
+                              ? 'text-cyan-400'
+                              : base.status === 'Alert'
+                              ? 'text-amber-400'
+                              : 'text-emerald-400'
+                          }`}
+                        >
+                          {isFortified ? 'MAX FORTIFIED' : base.status}
+                        </span>
+                      </div>
 
-                    {/* Coordinates & DMS */}
-                    <div className="text-[10px] font-mono text-zinc-400 bg-zinc-950/80 p-2 rounded-lg border border-zinc-800/80 mb-3 flex items-center justify-between">
-                      <span className="text-amber-400 font-bold">{base.dms}</span>
-                      <span className="text-zinc-500">{base.lat.toFixed(3)}°, {base.lng.toFixed(3)}°</span>
-                    </div>
-
-                    {/* Units Mini-Summary */}
-                    <div className="grid grid-cols-2 gap-1.5 mb-3 text-[11px] font-mono">
-                      {base.units.slice(0, 4).map((u) => (
-                        <div key={u.id} className="flex items-center justify-between px-2 py-1 bg-zinc-950/60 rounded border border-zinc-800/50">
-                          <span className="text-zinc-400 truncate max-w-[90px]">{u.name}</span>
-                          <span className="text-emerald-400 font-bold">{u.count}</span>
+                      {/* Stationed units */}
+                      <div className="flex-1 space-y-1.5 mb-3">
+                        <div className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider">
+                          Stationed Combat Contingent:
                         </div>
-                      ))}
-                    </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {base.units.slice(0, 4).map((u) => (
+                            <div
+                              key={u.id}
+                              className="p-1.5 bg-zinc-950/60 rounded border border-zinc-800 text-[10px] font-mono flex items-center justify-between"
+                            >
+                              <span className="text-zinc-300 truncate">{u.name}</span>
+                              <span className="text-white font-bold ml-1">{u.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-                    {/* Action Buttons: Deploy / Focus on Map & Fortify */}
-                    <div className="mt-auto pt-2 flex items-center gap-2 border-t border-zinc-800/60">
-                      <button
-                        onClick={() => {
-                          onFlyToBase(base.lat, base.lng, 8);
-                          onClose();
-                        }}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 bg-red-900/80 hover:bg-red-800 border border-red-500/70 rounded-lg text-xs font-mono font-bold text-white transition-all cursor-pointer shadow-md"
-                      >
-                        <Crosshair className="w-3.5 h-3.5" />
-                        <span>Deploy Camera</span>
-                      </button>
-
-                      {!isFortified && (
+                      {/* Actions */}
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 mt-auto">
                         <button
-                          onClick={() => handleFortifyBase(base)}
-                          title="Fortify Perimeter ($15M)"
-                          className="flex items-center justify-center gap-1 py-1.5 px-2 bg-amber-950/80 hover:bg-amber-900 border border-amber-500/70 rounded-lg text-xs font-mono font-bold text-amber-200 transition-all cursor-pointer"
+                          onClick={() => {
+                            onFlyToBase(base.lat, base.lng, 8);
+                            onClose();
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono rounded cursor-pointer transition-colors"
                         >
-                          <Shield className="w-3 h-3 text-amber-400" />
-                          <span>+$15M Fortify</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                          <span>View on Map</span>
                         </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
-        {/* TAB: WARFARE & RULES SIMULATOR (10-field priority air combat engine) */}
-        {activeTab === 'warfare' && (
-          <div id="mil-tab-warfare-content">
-            <BattleSimulatorView onAddNotification={onAddNotification} />
-          </div>
-        )}
+                        <div className="flex items-center gap-1.5">
+                          {!isSovereign && onToggleOccupyBase && (
+                            <button
+                              onClick={() => onToggleOccupyBase(base.id)}
+                              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-red-950 text-zinc-300 hover:text-red-300 border border-zinc-700 text-xs font-mono rounded cursor-pointer"
+                              title="Relinquish base occupation"
+                            >
+                              Withdraw
+                            </button>
+                          )}
 
-        {/* TAB: AIRTABLE ARSENAL (7 Military Tables) */}
-        {activeTab === 'arsenal' && (
-          <div id="mil-tab-arsenal-content">
-            <AirtableArsenalView
-              money={money}
-              onDeductMoney={onDeductMoney}
-              onAddNotification={onAddNotification}
-            />
-          </div>
-        )}
-
-        {/* TAB 2: INTEL (Satellite scans, neural AI surveillance, threat levels) */}
-        {activeTab === 'intel' && (
-          <div id="mil-tab-intel-content" className="max-w-6xl mx-auto space-y-4">
-            {/* Top Threat Banner */}
-            <div className="p-4 bg-gradient-to-r from-red-950/80 via-zinc-900 to-zinc-900 border border-red-500/60 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-red-900/80 border border-red-400 flex items-center justify-center text-red-300">
-                  <Radar className="w-6 h-6 animate-spin text-red-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold font-mono text-white uppercase tracking-wider">
-                    GLOBAL SATELLITE RECONNAISSANCE GRID
-                  </h3>
-                  <p className="text-xs text-zinc-400 max-w-xl">
-                    High-altitude SAR telemetry feeds synchronized across {MILITARY_BASES.length} military installations.
-                    Autonomous Neural AI matrix actively monitoring all foreign doctrines.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 font-mono">
-                <div className="px-3 py-1.5 bg-zinc-950 rounded-lg border border-red-500/40 text-center">
-                  <div className="text-[10px] text-zinc-500 uppercase">Threat Level</div>
-                  <div className="text-sm font-black text-red-400">ELEVATED</div>
-                </div>
-                <div className="px-3 py-1.5 bg-zinc-950 rounded-lg border border-cyan-500/40 text-center">
-                  <div className="text-[10px] text-zinc-500 uppercase">AI Agents</div>
-                  <div className="text-sm font-black text-cyan-400">{Object.keys(aiAgents).length} ACTIVE</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Foreign AI Surveillance Matrix */}
-            <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-xl">
-              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" />
-                <span>FOREIGN AI NEURAL WARFARE SURVEILLANCE MATRIX</span>
-              </h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Object.values(aiAgents).slice(0, 12).map((agent) => (
-                  <div
-                    key={agent.countryCode}
-                    className="p-3 bg-zinc-950/80 border border-zinc-800 rounded-lg flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="font-mono text-xs font-bold text-zinc-200">
-                          {agent.countryName}
-                        </span>
-                        <span
-                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase ${
-                            agent.threatAssessment === 'Critical'
-                              ? 'bg-red-950 text-red-300 border border-red-500/60'
-                              : agent.threatAssessment === 'Elevated'
-                              ? 'bg-amber-950 text-amber-300 border border-amber-500/60'
-                              : agent.threatAssessment === 'Moderate'
-                              ? 'bg-blue-950 text-blue-300 border border-blue-500/60'
-                              : 'bg-emerald-950 text-emerald-300 border border-emerald-500/60'
-                          }`}
-                        >
-                          {agent.threatAssessment}
-                        </span>
-                      </div>
-
-                      <div className="space-y-1.5 text-[10px] font-mono text-zinc-400">
-                        <div className="flex justify-between">
-                          <span>Warfare Readiness:</span>
-                          <span className="text-red-400 font-bold">{agent.warfareReadiness}%</span>
-                        </div>
-                        <div className="w-full bg-zinc-800 h-1 rounded-full overflow-hidden">
-                          <div className="bg-red-500 h-full" style={{ width: `${agent.warfareReadiness}%` }} />
-                        </div>
-
-                        <div className="flex justify-between">
-                          <span>Economic Score:</span>
-                          <span className="text-emerald-400 font-bold">{agent.economicScore}%</span>
-                        </div>
-                        <div className="w-full bg-zinc-800 h-1 rounded-full overflow-hidden">
-                          <div className="bg-emerald-500 h-full" style={{ width: `${agent.economicScore}%` }} />
+                          <button
+                            onClick={() => handleFortifyBase(base)}
+                            disabled={isFortified}
+                            className={`px-2.5 py-1.5 text-xs font-mono font-bold rounded cursor-pointer ${
+                              isFortified
+                                ? 'bg-cyan-950 text-cyan-400 border border-cyan-800 cursor-default'
+                                : 'bg-red-600 hover:bg-red-500 text-white'
+                            }`}
+                          >
+                            {isFortified ? 'Fortified' : 'Fortify ($15M)'}
+                          </button>
                         </div>
                       </div>
                     </div>
-
-                    <div className="mt-2 pt-2 border-t border-zinc-800/60 text-[9px] font-mono text-zinc-500 truncate">
-                      Epoch: <span className="text-zinc-300">{agent.epoch}</span> • XP: <span className="text-zinc-300">{agent.experiencePoints}</span> • <span className="text-amber-400 uppercase truncate">{agent.warfareDoctrine}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
         )}
 
-        {/* TAB 3: ACTIVITY (Live theater activity & reports) */}
-        {activeTab === 'activity' && (
-          <div id="mil-tab-activity-content" className="max-w-5xl mx-auto space-y-3">
-            <div className="flex items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-xl">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-red-400" />
-                <span>LIVE THEATER ACTIVITY & DISPATCH LOGS</span>
-              </span>
-              <span className="text-xs font-mono text-zinc-500">
-                {allReports.length} Dispatches Recorded
-              </span>
+        {/* TAB 2: WARFARE (Air combat simulator applying the 10-field pipeline to Airtable units) */}
+        {activeTab === 'warfare' && <BattleSimulatorView />}
+
+        {/* TABS 3 - 9: STRICTLY THE 7 AIRTABLE TABLES */}
+        {activeTab === 'air_force' && (
+          <AirtableArsenalView
+            initialTableKey="AIR_FORCE"
+            money={money}
+            onDeductMoney={onDeductMoney}
+            onAddNotification={onAddNotification}
+          />
+        )}
+
+        {activeTab === 'navy' && (
+          <AirtableArsenalView
+            initialTableKey="NAVY"
+            money={money}
+            onDeductMoney={onDeductMoney}
+            onAddNotification={onAddNotification}
+          />
+        )}
+
+        {activeTab === 'ground' && (
+          <AirtableArsenalView
+            initialTableKey="GROUND"
+            money={money}
+            onDeductMoney={onDeductMoney}
+            onAddNotification={onAddNotification}
+          />
+        )}
+
+        {activeTab === 'missiles' && (
+          <AirtableArsenalView
+            initialTableKey="MISSILES"
+            money={money}
+            onDeductMoney={onDeductMoney}
+            onAddNotification={onAddNotification}
+          />
+        )}
+
+        {activeTab === 'equipment' && (
+          <AirtableArsenalView
+            initialTableKey="EQUIPMENT"
+            money={money}
+            onDeductMoney={onDeductMoney}
+            onAddNotification={onAddNotification}
+          />
+        )}
+
+        {activeTab === 'electronic' && (
+          <AirtableArsenalView
+            initialTableKey="ELECTRONIC_SYSTEMS"
+            money={money}
+            onDeductMoney={onDeductMoney}
+            onAddNotification={onAddNotification}
+          />
+        )}
+
+        {activeTab === 'launchers' && (
+          <AirtableArsenalView
+            initialTableKey="LAUNCHERS"
+            money={money}
+            onDeductMoney={onDeductMoney}
+            onAddNotification={onAddNotification}
+          />
+        )}
+      </main>
+
+      {/* Annex / Seize Foreign Base Dialog */}
+      {isSeizeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 max-w-xl w-full space-y-4 shadow-2xl font-mono">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Swords className="w-5 h-5 text-red-500" />
+                <h3 className="font-bold text-sm text-white uppercase">Annex / Seize Foreign Base</h3>
+              </div>
+              <button
+                onClick={() => setIsSeizeModalOpen(false)}
+                className="text-zinc-500 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="space-y-2.5">
-              {allReports.map((rep, idx) => (
+            <p className="text-xs text-zinc-400 font-sans">
+              Select an installation to dispatch expeditionary forces. Once occupied, the base and its regional garrison will enter your national command list.
+            </p>
+
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <input
+                type="text"
+                value={targetSearch}
+                onChange={(e) => setTargetSearch(e.target.value)}
+                placeholder="Search target fortress or country..."
+                className="w-full pl-9 pr-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-white outline-none focus:border-red-500"
+              />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+              {conquerableBases.slice(0, 15).map((base) => (
                 <div
-                  key={`${rep.id}-${idx}`}
-                  className="p-3.5 bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-xl flex items-start gap-3 transition-colors"
+                  key={base.id}
+                  className="p-2.5 bg-zinc-950 rounded-lg border border-zinc-800 flex items-center justify-between gap-3 hover:border-zinc-700"
                 >
-                  <img
-                    src={rep.flagUrl}
-                    alt={rep.countryName}
-                    className="w-6 h-4 rounded object-cover border border-zinc-700 shrink-0 mt-0.5 shadow"
-                  />
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-zinc-200">
-                          {rep.baseName}
-                        </span>
-                        <span className="text-[10px] font-mono text-zinc-500">
-                          ({rep.countryName})
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase ${
-                            rep.type === 'urgent'
-                              ? 'bg-red-950 text-red-300 border border-red-500'
-                              : rep.type === 'defense'
-                              ? 'bg-amber-950 text-amber-300 border border-amber-500'
-                              : rep.type === 'intel'
-                              ? 'bg-blue-950 text-blue-300 border border-blue-500'
-                              : 'bg-emerald-950 text-emerald-300 border border-emerald-500'
-                          }`}
-                        >
-                          {rep.type}
-                        </span>
-                        <span className="text-[10px] font-mono text-zinc-500">{rep.timeAgo}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <img src={base.flagUrl} alt="" className="w-5 h-3.5 rounded object-cover" />
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-zinc-200 truncate">{base.name}</div>
+                      <div className="text-[10px] text-zinc-500 truncate">
+                        {base.countryName} • {base.codeName}
                       </div>
                     </div>
-
-                    <p className="text-xs text-zinc-300 leading-relaxed font-sans">{rep.text}</p>
                   </div>
 
                   <button
-                    onClick={() => {
-                      onFlyToBase(rep.lat, rep.lng, 8);
-                      onClose();
-                    }}
-                    title="Jump camera to base location"
-                    className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg shrink-0 cursor-pointer"
+                    onClick={() => handleSeizeBase(base)}
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded text-xs font-bold shrink-0 cursor-pointer"
                   >
-                    <ArrowUpRight className="w-4 h-4" />
+                    Seize Base
                   </button>
                 </div>
               ))}
             </div>
-          </div>
-        )}
 
-        {/* TAB 4: UNITS (Inspection of all military units & categories) */}
-        {activeTab === 'units' && (
-          <div id="mil-tab-units-content" className="max-w-6xl mx-auto space-y-4">
-            {/* Aggregate unit category cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase">Active Infantry</span>
-                <div className="text-xl sm:text-2xl font-black font-mono text-emerald-400 mt-1">
-                  {totalTroops.toLocaleString()}
-                </div>
-                <div className="text-[10px] text-zinc-400 mt-1">Special Ops & Combat Divisions</div>
-              </div>
-
-              <div className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase">Air Fleet</span>
-                <div className="text-xl sm:text-2xl font-black font-mono text-cyan-400 mt-1">
-                  {totalAircraft.toLocaleString()}
-                </div>
-                <div className="text-[10px] text-zinc-400 mt-1">F-22, F-35, Su-57, J-20, Rafale</div>
-              </div>
-
-              <div className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase">Main Battle Tanks</span>
-                <div className="text-xl sm:text-2xl font-black font-mono text-amber-400 mt-1">
-                  {totalArmor.toLocaleString()}
-                </div>
-                <div className="text-[10px] text-zinc-400 mt-1">Abrams, Leopard 2A8, T-90M</div>
-              </div>
-
-              <div className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase">SAM & Air Defense</span>
-                <div className="text-xl sm:text-2xl font-black font-mono text-red-400 mt-1">
-                  {totalAirDefense.toLocaleString()}
-                </div>
-                <div className="text-[10px] text-zinc-400 mt-1">Patriot, S-400, Iron Dome, THAAD</div>
-              </div>
-            </div>
-
-            {/* Unit Breakdown Across Theaters */}
-            <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-xl">
-              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300 mb-3">
-                THEATER HARDWARE & GARRISON DISPATCHES
-              </h4>
-
-              <div className="space-y-3">
-                {MILITARY_BASES.filter((b) => b.countryCode === userCountry.code || b.status === 'Alert').map((b) => (
-                  <div key={b.id} className="p-3 bg-zinc-950 rounded-lg border border-zinc-800">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <img src={b.flagUrl} alt="" className="w-4 h-3 rounded object-cover" />
-                        <span className="font-mono text-xs font-bold text-zinc-200">{b.name}</span>
-                        <span className="text-[10px] font-mono text-zinc-500">({b.countryName})</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-amber-400 font-bold">{b.status}</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-                      {b.units.map((u) => (
-                        <div key={u.id} className="p-2 bg-zinc-900/60 rounded border border-zinc-800/80 text-[10px] font-mono">
-                          <div className="text-zinc-400 truncate">{u.name}</div>
-                          <div className="text-sm font-bold text-white mt-0.5">{u.count}</div>
-                          <div className="text-[9px] text-zinc-500 uppercase">{u.type}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="flex justify-end pt-2 border-t border-zinc-800">
+              <button
+                onClick={() => setIsSeizeModalOpen(false)}
+                className="px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* TAB 5: STATS (Strategic statistics, combat readiness, defense indexes) */}
-        {activeTab === 'stats' && (
-          <div id="mil-tab-stats-content" className="max-w-6xl mx-auto space-y-4 font-mono">
-            {/* Strategic KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
-                <span className="text-xs text-zinc-400 uppercase">Interception Success Ratio</span>
-                <div className="text-3xl font-black text-emerald-400 mt-2">98.4%</div>
-                <p className="text-xs text-zinc-500 mt-1 font-sans">
-                  Patriot PAC-3, Iron Dome, and S-400 interception network verified during recent drone & missile surges.
-                </p>
+      {/* Construct Domestic Base Dialog */}
+      {isConstructModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 max-w-lg w-full space-y-4 shadow-2xl font-mono">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Hammer className="w-5 h-5 text-emerald-400" />
+                <h3 className="font-bold text-sm text-white uppercase">Construct Regional Military Bastion</h3>
               </div>
+              <button
+                onClick={() => setIsConstructModalOpen(false)}
+                className="text-zinc-500 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
 
-              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
-                <span className="text-xs text-zinc-400 uppercase">Global Base Fortification</span>
-                <div className="text-3xl font-black text-amber-400 mt-2">
-                  {MILITARY_BASES.filter((b) => fortifiedBases[b.id] || b.status === 'Fortified').length} / {MILITARY_BASES.length}
-                </div>
-                <p className="text-xs text-zinc-500 mt-1 font-sans">
-                  Outposts upgraded with hardened subterranean bunkers and automated radar domes.
-                </p>
+            <div className="p-3 bg-zinc-950 rounded-lg border border-zinc-800 text-xs space-y-1">
+              <div className="text-zinc-400">Homeland Sovereign Territory:</div>
+              <div className="font-bold text-emerald-400 flex items-center gap-2">
+                <img src={`https://flagcdn.com/w80/${userCountry.code.toLowerCase()}.png`} alt="" className="w-5 h-3.5 rounded object-cover" />
+                <span>{userCountry.name}</span>
+                <span className="text-zinc-500 text-[10px]">({userCountry.code})</span>
               </div>
-
-              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
-                <span className="text-xs text-zinc-400 uppercase">Military Spending Power</span>
-                <div className="text-3xl font-black text-cyan-400 mt-2">
-                  ${(money / 1e6).toFixed(1)}M
-                </div>
-                <p className="text-xs text-zinc-500 mt-1 font-sans">
-                  Liquid national treasury balance ready for instantaneous military equipment procurement and megaprojects.
-                </p>
+              <div className="text-[11px] text-zinc-500">
+                Rule: Countries have 1 base in their capital city, and can build additional bases across other regions of their sovereign territory.
               </div>
             </div>
 
-            {/* Strategic Readiness Bars */}
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                THEATER STRATEGIC READINESS PARAMETERS
-              </h4>
-
-              <div className="space-y-2 text-xs">
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-zinc-400">Nuclear Deterrence Readiness</span>
-                    <span className="text-red-400 font-bold">100% (READY)</span>
-                  </div>
-                  <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-red-500 h-full w-full" />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-zinc-400">Air Supremacy & Quick Reaction Alert (QRA)</span>
-                    <span className="text-cyan-400 font-bold">94%</span>
-                  </div>
-                  <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-cyan-500 h-full w-[94%]" />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-zinc-400">Logistics & Propellant Supply Pipeline</span>
-                    <span className="text-emerald-400 font-bold">88%</span>
-                  </div>
-                  <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full w-[88%]" />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-zinc-400">Cyber Warfare & Space Link Integrity</span>
-                    <span className="text-amber-400 font-bold">91%</span>
-                  </div>
-                  <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-amber-500 h-full w-[91%]" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 6: PROGRAMS (Strategic military R&D programs) */}
-        {activeTab === 'programs' && (
-          <div id="mil-tab-programs-content" className="max-w-6xl mx-auto space-y-4">
-            <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between">
+            <div className="space-y-3 text-xs">
               <div>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-amber-400" />
-                  <span>STRATEGIC MILITARY R&D SPECIAL PROGRAMS</span>
-                </span>
-                <p className="text-[11px] text-zinc-400 font-sans mt-0.5">
-                  Allocate national funds to accelerate hypersonic, laser, space, and autonomous swarm capabilities.
-                </p>
+                <label className="block text-zinc-400 mb-1">Base Name / Designation</label>
+                <input
+                  type="text"
+                  value={newBaseName}
+                  onChange={(e) => setNewBaseName(e.target.value)}
+                  placeholder={`e.g. ${userCountry.name} Coastal Redoubt`}
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-white text-xs outline-none focus:border-emerald-500"
+                />
               </div>
-              <div className="font-mono text-xs text-emerald-400 font-bold">
-                Treasury: ${(money / 1e6).toFixed(1)}M
+
+              <div>
+                <label className="block text-zinc-400 mb-1">Tactical Codename</label>
+                <input
+                  type="text"
+                  value={newBaseCodeName}
+                  onChange={(e) => setNewBaseCodeName(e.target.value)}
+                  placeholder="e.g. NORTHERN AEGIS"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-white text-xs outline-none focus:border-emerald-500 uppercase"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-zinc-400 mb-1">Domestic Region / Sector</label>
+                  <select
+                    value={newBaseSector}
+                    onChange={(e: any) => setNewBaseSector(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-white text-xs outline-none focus:border-emerald-500"
+                  >
+                    <option value="north">Northern Sector Corridor</option>
+                    <option value="south">Southern Frontier Redoubt</option>
+                    <option value="east">Eastern Mountain Bastion</option>
+                    <option value="west">Western Defense Zone</option>
+                    <option value="coastal">Coastal / Maritime Harbor</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 mb-1">Branch Specialization</label>
+                  <select
+                    value={newBaseType}
+                    onChange={(e: any) => setNewBaseType(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-white text-xs outline-none focus:border-emerald-500"
+                  >
+                    <option value="air">Aerospace & Interceptor Wing</option>
+                    <option value="naval">Naval Task Fleet</option>
+                    <option value="ground">Armored Mechanized Division</option>
+                    <option value="air-defense">Integrated Missile Shield Net</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-lg flex items-center justify-between">
+                <div>
+                  <div className="text-[11px] text-zinc-400">Engineering & Deployment Cost:</div>
+                  <div className="text-sm font-bold text-emerald-400">$25,000,000</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] text-zinc-400">Available Treasury:</div>
+                  <div className={`text-sm font-bold ${money >= 25000000 ? 'text-zinc-200' : 'text-red-400'}`}>
+                    ${money.toLocaleString()}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {programs.map((prog) => {
-                const canAfford = money >= prog.cost;
-                const isMax = prog.level >= prog.maxLevel && prog.progress >= 100;
-
-                return (
-                  <div
-                    key={prog.id}
-                    className="p-4 bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 rounded-xl flex flex-col justify-between transition-all"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <div>
-                          <h4 className="font-mono font-bold text-sm text-zinc-100">{prog.name}</h4>
-                          <span className="text-[10px] font-mono text-red-400 uppercase tracking-widest font-bold">
-                            {prog.codename}
-                          </span>
-                        </div>
-                        <span className="px-2 py-0.5 rounded bg-zinc-800 text-[10px] font-mono font-bold text-amber-300 border border-zinc-700">
-                          Tier {prog.level} / {prog.maxLevel}
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-zinc-300 font-sans mb-3 leading-relaxed">
-                        {prog.description}
-                      </p>
-
-                      <div className="p-2 bg-zinc-950 rounded-lg border border-zinc-800/80 text-[11px] font-mono text-emerald-400 mb-3">
-                        <span className="text-zinc-500">Capability:</span> {prog.benefit}
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="space-y-1 mb-3 font-mono text-[10px]">
-                        <div className="flex justify-between text-zinc-400">
-                          <span>Research Completion</span>
-                          <span className="text-white font-bold">{prog.progress}%</span>
-                        </div>
-                        <div className="w-full bg-zinc-950 h-2 rounded-full overflow-hidden border border-zinc-800">
-                          <div
-                            className="bg-gradient-to-r from-amber-500 to-red-500 h-full transition-all duration-300"
-                            style={{ width: `${prog.progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleFundProgram(prog)}
-                      disabled={!canAfford || isMax}
-                      className={`w-full py-2 px-3 rounded-lg font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        isMax
-                          ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                          : canAfford
-                          ? 'bg-red-700 hover:bg-red-600 text-white shadow-lg border border-red-400 active:scale-98'
-                          : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                      }`}
-                    >
-                      {isMax ? (
-                        <span>MAX TIER REACHED</span>
-                      ) : (
-                        <>
-                          <TrendingUp className="w-3.5 h-3.5" />
-                          <span>Fund Advance: ${(prog.cost / 1e6).toFixed(1)}M</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
+            <div className="flex justify-end gap-2 pt-2 border-t border-zinc-800">
+              <button
+                onClick={() => setIsConstructModalOpen(false)}
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConstructBase}
+                disabled={money < 25000000}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg"
+              >
+                <Hammer className="w-3.5 h-3.5" />
+                <span>Authorize Construction</span>
+              </button>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 };

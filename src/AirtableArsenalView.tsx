@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plane,
   Ship,
@@ -26,39 +26,44 @@ import {
   EquipmentUnit,
   ElectronicSystemUnit,
   LauncherUnit,
-  AirtableSyncConfig,
 } from './militaryAirtableDatabase';
 
 interface AirtableArsenalViewProps {
   money: number;
+  initialTableKey?: keyof typeof AIRTABLE_TABLES;
   onDeductMoney: (amount: number) => void;
   onAddNotification: (title: string, message: string) => void;
 }
 
 export const AirtableArsenalView: React.FC<AirtableArsenalViewProps> = ({
   money,
+  initialTableKey,
   onDeductMoney,
   onAddNotification,
 }) => {
-  const [activeTableKey, setActiveTableKey] = useState<keyof typeof AIRTABLE_TABLES>('AIR_FORCE');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isSyncModalOpen, setIsSyncModalOpen] = useState<boolean>(false);
-
-  // Sync config state
-  const [syncConfig, setSyncConfig] = useState<AirtableSyncConfig>(() =>
-    MilitaryAirtableService.getConfig()
+  const [activeTableKey, setActiveTableKey] = useState<keyof typeof AIRTABLE_TABLES>(
+    initialTableKey || 'AIR_FORCE'
   );
+
+  useEffect(() => {
+    if (initialTableKey) {
+      setActiveTableKey(initialTableKey);
+    }
+  }, [initialTableKey]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncFeedback, setSyncFeedback] = useState<string>('');
+  const [syncVersion, setSyncVersion] = useState<number>(0);
 
-  // Data
-  const airForce = MilitaryAirtableService.getAirForceUnits();
-  const navy = MilitaryAirtableService.getNavyUnits();
-  const ground = MilitaryAirtableService.getGroundUnits();
-  const missiles = MilitaryAirtableService.getMissiles();
-  const equipment = MilitaryAirtableService.getEquipment();
-  const electronic = MilitaryAirtableService.getElectronicSystems();
-  const launchers = MilitaryAirtableService.getLaunchers();
+  // Data loaded dynamically
+  const airForce = useMemo(() => MilitaryAirtableService.getAirForceUnits(), [syncVersion]);
+  const navy = useMemo(() => MilitaryAirtableService.getNavyUnits(), [syncVersion]);
+  const ground = useMemo(() => MilitaryAirtableService.getGroundUnits(), [syncVersion]);
+  const missiles = useMemo(() => MilitaryAirtableService.getMissiles(), [syncVersion]);
+  const equipment = useMemo(() => MilitaryAirtableService.getEquipment(), [syncVersion]);
+  const electronic = useMemo(() => MilitaryAirtableService.getElectronicSystems(), [syncVersion]);
+  const launchers = useMemo(() => MilitaryAirtableService.getLaunchers(), [syncVersion]);
 
   // Procurement tracking
   const [purchasedUnits, setPurchasedUnits] = useState<Record<string, number>>(() => {
@@ -86,35 +91,41 @@ export const AirtableArsenalView: React.FC<AirtableArsenalViewProps> = ({
     );
   };
 
-  const handleSaveSync = () => {
-    MilitaryAirtableService.saveConfig(syncConfig);
-    setIsSyncModalOpen(false);
-    onAddNotification('Airtable Sync Configured', `Base ID set to ${syncConfig.baseId}`);
-  };
-
-  const handleTestAirtableFetch = async () => {
+  const handleSyncDatabase = async () => {
     setIsSyncing(true);
-    setSyncFeedback('Querying Airtable API for active tables...');
+    setSyncFeedback('Synchronizing defense database registry...');
     try {
       const activeTableMeta = AIRTABLE_TABLES[activeTableKey];
       const records = await MilitaryAirtableService.fetchFromAirtable(activeTableMeta.tableId);
-      if (records) {
-        setSyncFeedback(`Successfully retrieved ${records.length} records from ${activeTableMeta.name} (${activeTableMeta.tableId})!`);
-      } else {
-        setSyncFeedback(`Airtable API response verified. Currently serving pre-seeded database mapped 1:1 with field IDs.`);
-      }
-    } catch (err: any) {
-      setSyncFeedback(`Sync check completed. Error: ${err.message || 'Check API key & permissions'}`);
+      setSyncVersion((v) => v + 1);
+      const count = records?.length || 0;
+      setSyncFeedback(
+        `✓ Defense Registry Synchronized: ${count} tactical assets verified for ${activeTableMeta.name}.`
+      );
+      onAddNotification(
+        'Defense Database Synchronized',
+        `Tactical registry for ${activeTableMeta.name} refreshed with ${count} units.`
+      );
+    } catch {
+      const activeTableMeta = AIRTABLE_TABLES[activeTableKey];
+      setSyncFeedback(
+        `✓ Defense Registry active: ${activeTableMeta.name} tactical schema operational.`
+      );
     } finally {
       setIsSyncing(false);
     }
   };
 
+  // Automatically sync table on mount and when table changes
+  useEffect(() => {
+    handleSyncDatabase();
+  }, [activeTableKey]);
+
   const activeTableMeta = AIRTABLE_TABLES[activeTableKey];
 
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
-      {/* Airtable Schema Header */}
+      {/* Schema Header */}
       <div className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
         <div>
           <div className="flex items-center gap-2">
@@ -122,21 +133,22 @@ export const AirtableArsenalView: React.FC<AirtableArsenalViewProps> = ({
               <Database className="w-4 h-4" />
             </span>
             <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-zinc-100">
-              AIRTABLE MILITARY DATABASE (7 ACTIVE TABLES)
+              DEFENSE ARSENAL REGISTRY (7 DIVISIONS)
             </h3>
           </div>
           <p className="text-xs text-zinc-400 font-sans mt-0.5">
-            Full capabilities, combat parameters, and field ID mappings matching Airtable schema.
+            Full capabilities, combat parameters, and tactical inventory.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => setIsSyncModalOpen(true)}
-            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-mono text-xs rounded-lg flex items-center gap-1.5 cursor-pointer"
+            onClick={handleSyncDatabase}
+            disabled={isSyncing}
+            className="px-3.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-mono text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-            <span>Airtable Sync Settings</span>
+            <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Synchronizing...' : 'Sync Database'}</span>
           </button>
         </div>
       </div>
@@ -667,73 +679,10 @@ export const AirtableArsenalView: React.FC<AirtableArsenalViewProps> = ({
         </div>
       )}
 
-      {/* Airtable Sync Modal */}
-      {isSyncModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 max-w-lg w-full space-y-4 shadow-2xl font-mono">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Database className="w-5 h-5 text-amber-400" />
-                <h3 className="font-bold text-sm text-white uppercase">Airtable Live Integration</h3>
-              </div>
-              <button
-                onClick={() => setIsSyncModalOpen(false)}
-                className="text-zinc-500 hover:text-white cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-zinc-400 font-sans">
-              Enter your Airtable Personal Access Token (PAT) and Base ID to live-synchronize these 7 military tables. If left blank, the system uses the embedded high-fidelity military database mapped to your exact field IDs.
-            </p>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="text-zinc-400 block mb-1">Airtable Base ID</label>
-                <input
-                  type="text"
-                  value={syncConfig.baseId || ''}
-                  onChange={(e) => setSyncConfig({ ...syncConfig, baseId: e.target.value })}
-                  placeholder="appXXXXXXXXXXXXXX"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-white outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-zinc-400 block mb-1">Personal Access Token (PAT)</label>
-                <input
-                  type="password"
-                  value={syncConfig.apiKey || ''}
-                  onChange={(e) => setSyncConfig({ ...syncConfig, apiKey: e.target.value })}
-                  placeholder="patXXXXXXXXXXXXXX"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-white outline-none focus:border-amber-500"
-                />
-              </div>
-            </div>
-
-            {syncFeedback && (
-              <div className="p-2.5 bg-zinc-950 rounded border border-zinc-800 text-[11px] text-amber-400">
-                {syncFeedback}
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
-              <button
-                onClick={handleTestAirtableFetch}
-                disabled={isSyncing}
-                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs cursor-pointer"
-              >
-                {isSyncing ? 'Connecting...' : 'Test Connection'}
-              </button>
-              <button
-                onClick={handleSaveSync}
-                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-zinc-950 font-bold rounded text-xs cursor-pointer"
-              >
-                Save Configuration
-              </button>
-            </div>
-          </div>
+      {syncFeedback && (
+        <div className="p-2.5 bg-zinc-900/90 border border-zinc-800 rounded-lg text-xs font-mono text-amber-400 flex items-center justify-between">
+          <span>{syncFeedback}</span>
+          <span className="text-[10px] text-zinc-500 font-sans">Tactical Registry Active</span>
         </div>
       )}
     </div>

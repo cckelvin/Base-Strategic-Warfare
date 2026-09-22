@@ -26,1689 +26,1465 @@ export interface MilitaryBase {
   status: 'Operational' | 'Alert' | 'Fortified';
   reports: BaseReport[];
   units: MilitaryUnit[];
+  isCapital?: boolean;
+  isConstructed?: boolean;
+  region?: string;
 }
 
-export const MILITARY_BASES: MilitaryBase[] = [
-  // ================= NORTH & CENTRAL AMERICA =================
-  // US 1 (Big Country #1 - Base A)
+/**
+ * CAPITAL MILITARY BASES
+ * Rule: All countries have exactly 1 base located in their capital city only.
+ */
+export const CAPITAL_MILITARY_BASES: MilitaryBase[] = [
   {
-    id: 'base-us-nellis',
-    name: 'Sector-1 Pentagon Air Nexus',
+    id: 'base-us-capital',
+    name: 'Pentagon National Military Command Bastion',
     codeName: 'APEX AEROSPACE BASTION',
     countryName: 'United States',
     countryCode: 'US',
     flagUrl: 'https://flagcdn.com/w80/us.png',
-    lat: 36.236,
-    lng: -115.034,
-    dms: `36°14'09.6"N  115°02'02.4"W`,
+    lat: 38.8719,
+    lng: -77.0563,
+    dms: `38°52'18.8"N 77°03'22.7"W`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-us-1', timeAgo: '5m ago', type: 'defense', text: 'NORAD early warning arrays confirm all continental airspace sectors clear.' },
-      { id: 'rep-us-2', timeAgo: '35m ago', type: 'urgent', text: 'Scrambled 2 F-22 squadrons to investigate anomalous stealth telemetry off Pacific sector.' },
-      { id: 'rep-us-3', timeAgo: '2h ago', type: 'intel', text: 'Hypersonic test missile telemetry downlink received from Kwajalein proving grounds.' },
+      { id: 'rep-us-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-us-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-us-1', name: 'Troops', count: 1200, type: 'infantry', code: 'AIR-FORCE-SEC' },
-      { id: 'u-us-2', name: 'F-22 Raptor', count: 64, type: 'aircraft', code: 'RAPTOR-WING' },
-      { id: 'u-us-3', name: 'F-35 Lightning II', count: 48, type: 'aircraft', code: 'STEALTH-STRIKE' },
-      { id: 'u-us-4', name: 'B-2 Spirit', count: 10, type: 'aircraft', code: 'GLOBAL-STRIKE' },
-      { id: 'u-us-5', name: 'M1A2 SEPv3', count: 85, type: 'armor', code: 'ARMORED-DIV' },
-      { id: 'u-us-6', name: 'THAAD System', count: 6, type: 'air-defense', code: 'BALLISTIC-SHIELD' },
-    ],
+      { id: 'u-us-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-us-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-us-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-us-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // US 2 (Big Country #1 - Base B)
   {
-    id: 'base-us-bragg',
-    name: 'Fort Liberty Atlantic Redoubt',
-    codeName: 'AIRBORNE GLOBAL SHIELD',
-    countryName: 'United States',
-    countryCode: 'US',
-    flagUrl: 'https://flagcdn.com/w80/us.png',
-    lat: 35.139,
-    lng: -79.006,
-    dms: `35°08'20.4"N  79°00'21.6"W`,
-    status: 'Operational',
-    reports: [
-      { id: 'rep-us2-1', timeAgo: '12m ago', type: 'logistics', text: 'Heavy airlift cargo brigade pre-staged for immediate global rapid deployment.' },
-      { id: 'rep-us2-2', timeAgo: '1h ago', type: 'intel', text: 'Atlantic acoustic sonar grid reports zero undersea intrusions.' },
-    ],
-    units: [
-      { id: 'u-us2-1', name: 'Troops', count: 1800, type: 'infantry', code: '82ND-AIRBORNE' },
-      { id: 'u-us2-2', name: 'AH-64E Apache', count: 36, type: 'aircraft', code: 'ATTACK-HELI' },
-      { id: 'u-us2-3', name: 'M10 Booker', count: 44, type: 'armor', code: 'LIGHT-TANK' },
-      { id: 'u-us2-4', name: 'Patriot PAC-3 MSE', count: 16, type: 'air-defense', code: 'INTERCEPT-NET' },
-    ],
-  },
-  // CA 1 (Big Country #2 - Base A)
-  {
-    id: 'base-ca-trenton',
-    name: 'CFB Trenton Eastern Command',
+    id: 'base-ca-capital',
+    name: 'Ottawa National Defense Citadel',
     codeName: 'MAPLE GUARDIAN CITADEL',
     countryName: 'Canada',
     countryCode: 'CA',
     flagUrl: 'https://flagcdn.com/w80/ca.png',
-    lat: 44.118,
-    lng: -77.528,
-    dms: `44°07'04.8"N  77°31'40.8"W`,
-    status: 'Operational',
-    reports: [
-      { id: 'rep-ca-1', timeAgo: '18m ago', type: 'logistics', text: 'CC-177 Globemaster airlift transport completed Arctic perimeter supply loop.' },
-      { id: 'rep-ca-2', timeAgo: '3h ago', type: 'intel', text: 'NORAD northern sector radars clear of unauthorized contacts.' },
-    ],
-    units: [
-      { id: 'u-ca-1', name: 'Troops', count: 520, type: 'infantry', code: 'RCR-BATTALION' },
-      { id: 'u-ca-2', name: 'CF-188 Hornet', count: 28, type: 'aircraft', code: 'RCAF-SQUADRON' },
-      { id: 'u-ca-3', name: 'Leopard 2A4M CAN', count: 24, type: 'armor', code: 'ROYAL-ARMOR' },
-      { id: 'u-ca-4', name: 'NASAMS Air Defense', count: 8, type: 'air-defense', code: 'ARCTIC-SHIELD' },
-    ],
-  },
-  // CA 2 (Big Country #2 - Base B)
-  {
-    id: 'base-ca-coldlake',
-    name: 'CFB Cold Lake Western Bastion',
-    codeName: 'AURORA FIGHTER COMMAND',
-    countryName: 'Canada',
-    countryCode: 'CA',
-    flagUrl: 'https://flagcdn.com/w80/ca.png',
-    lat: 54.405,
-    lng: -110.279,
-    dms: `54°24'18.0"N  110°16'44.4"W`,
+    lat: 45.4215,
+    lng: -75.6972,
+    dms: `45°25'17.4"N 75°41'50.0"W`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ca2-1', timeAgo: '24m ago', type: 'defense', text: 'Intercept exercises across Primrose Lake Air Weapons Range completed.' },
+      { id: 'rep-ca-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ca-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ca2-1', name: 'Troops', count: 480, type: 'infantry', code: '4-WING-SECURITY' },
-      { id: 'u-ca2-2', name: 'CF-188 Hornet', count: 32, type: 'aircraft', code: 'TOP-GUN-AIR' },
-      { id: 'u-ca2-3', name: 'LAV 6.0 Combat Vehicles', count: 36, type: 'armor', code: 'TACTICAL-MECH' },
-      { id: 'u-ca2-4', name: 'ADATS Interceptors', count: 6, type: 'air-defense', code: 'POLAR-DEFENSE' },
-    ],
+      { id: 'u-ca-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ca-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ca-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ca-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Mexico (MX)
   {
-    id: 'base-mx-santa-lucia',
-    name: 'Base Aérea Santa Lucía',
-    codeName: 'AZTECA STRATEGIC NEXUS',
+    id: 'base-mx-capital',
+    name: 'Mexico City Joint Operations Citadel',
+    codeName: 'AZTEC SHIELD COMMAND',
     countryName: 'Mexico',
     countryCode: 'MX',
     flagUrl: 'https://flagcdn.com/w80/mx.png',
-    lat: 19.749,
-    lng: -99.014,
-    dms: `19°44'56.4"N  99°00'50.4"W`,
-    status: 'Operational',
+    lat: 19.4326,
+    lng: -99.1332,
+    dms: `19°25'57.4"N 99°07'59.5"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-mx-1', timeAgo: '14m ago', type: 'defense', text: 'Gulf perimeter coastal air surveillance flights operational.' },
-      { id: 'rep-mx-2', timeAgo: '2h ago', type: 'logistics', text: 'Modernized tactical communication backbone online across central sectors.' },
+      { id: 'rep-mx-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-mx-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-mx-1', name: 'Troops', count: 650, type: 'infantry', code: 'FUERZAS-ESP' },
-      { id: 'u-mx-2', name: 'F-5E Tiger II', count: 10, type: 'aircraft', code: 'ESC-AEREO-401' },
-      { id: 'u-mx-3', name: 'DN-XI Armored Vehicles', count: 38, type: 'armor', code: 'REG-CAB' },
-      { id: 'u-mx-4', name: 'RBS-70 NG Manpads', count: 12, type: 'air-defense', code: 'DEFENSA-AEREA' },
-    ],
+      { id: 'u-mx-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-mx-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-mx-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-mx-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Cuba (CU)
   {
-    id: 'base-cu-san-antonio',
-    name: 'San Antonio de los Baños Air Base',
-    codeName: 'CARIBE SHIELD REDOUBT',
+    id: 'base-cu-capital',
+    name: 'Havana Strategic Defense Redoubt',
+    codeName: 'CARIBBEAN IRON NEXUS',
     countryName: 'Cuba',
     countryCode: 'CU',
     flagUrl: 'https://flagcdn.com/w80/cu.png',
-    lat: 22.871,
-    lng: -82.507,
-    dms: `22°52'15.6"N  82°30'25.2"W`,
-    status: 'Alert',
+    lat: 23.1136,
+    lng: -82.3666,
+    dms: `23°06'49.0"N 82°21'59.8"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-cu-1', timeAgo: '28m ago', type: 'defense', text: 'Florida Straits coastal early-warning radar arrays active.' },
+      { id: 'rep-cu-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-cu-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-cu-1', name: 'Troops', count: 420, type: 'infantry', code: 'AVISPAS-NEGRAS' },
-      { id: 'u-cu-2', name: 'MiG-29 Fulcrum', count: 8, type: 'aircraft', code: 'BRIGADA-AEREA' },
-      { id: 'u-cu-3', name: 'T-62M Tanks', count: 30, type: 'armor', code: 'DIVISION-BLINDADA' },
-      { id: 'u-cu-4', name: 'S-125 Pechora-2M', count: 10, type: 'air-defense', code: 'COASTAL-SAM' },
-    ],
+      { id: 'u-cu-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-cu-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-cu-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-cu-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Panama (PA)
   {
-    id: 'base-pa-howard',
-    name: 'Panama Canal Gateway Station',
-    codeName: 'ISTHMUS DEFENSE NEXUS',
+    id: 'base-pa-capital',
+    name: 'Panama Canal Defense Citadel',
+    codeName: 'ISTHMUS GLOBAL GUARDIAN',
     countryName: 'Panama',
     countryCode: 'PA',
     flagUrl: 'https://flagcdn.com/w80/pa.png',
-    lat: 8.915,
-    lng: -79.599,
-    dms: `8°54'54.0"N  79°35'56.4"W`,
-    status: 'Operational',
-    reports: [
-      { id: 'rep-pa-1', timeAgo: '10m ago', type: 'defense', text: 'Interoceanic transit security locks operating under maximum vigilance.' },
-    ],
-    units: [
-      { id: 'u-pa-1', name: 'Troops', count: 320, type: 'infantry', code: 'SENAFRONT-ELITE' },
-      { id: 'u-pa-2', name: 'Bell 407 & Super Huey', count: 14, type: 'aircraft', code: 'AEROTRANSPORTE' },
-      { id: 'u-pa-3', name: 'V-150 Commando', count: 18, type: 'armor', code: 'CANAL-PATROL' },
-      { id: 'u-pa-4', name: 'Mistral SAM Batteries', count: 6, type: 'air-defense', code: 'CANAL-SKY-SHIELD' },
-    ],
-  },
-
-  // ================= SOUTH AMERICA =================
-  // Brazil 1 (Big Country #3 - Base A)
-  {
-    id: 'base-br-anapolis',
-    name: 'Base Aérea de Anápolis',
-    codeName: 'AMAZONIAN APEX COMMAND',
-    countryName: 'Brazil',
-    countryCode: 'BR',
-    flagUrl: 'https://flagcdn.com/w80/br.png',
-    lat: -16.248,
-    lng: -48.966,
-    dms: `16°14'52.8"S  48°57'57.6"W`,
+    lat: 8.9824,
+    lng: -79.5199,
+    dms: `08°58'56.6"N 79°31'11.6"W`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-br-1', timeAgo: '9m ago', type: 'defense', text: 'F-39 Gripen E combat air patrol conducted across central plateau.' },
-      { id: 'rep-br-2', timeAgo: '1h ago', type: 'intel', text: 'Satellite radar surveillance network monitoring northern borders.' },
+      { id: 'rep-pa-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-pa-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-br-1', name: 'Troops', count: 850, type: 'infantry', code: 'INFANTARIA-FAB' },
-      { id: 'u-br-2', name: 'F-39 Gripen E', count: 36, type: 'aircraft', code: '1-GDA-JAGUAR' },
-      { id: 'u-br-3', name: 'A-29 Super Tucano', count: 24, type: 'aircraft', code: 'ESC-FLECHA' },
-      { id: 'u-br-4', name: 'Guarani 6x6 APC', count: 50, type: 'armor', code: 'BLINDADOS-BR' },
-      { id: 'u-br-5', name: 'RBS-70 NG & Igla-S', count: 14, type: 'air-defense', code: 'DEFESA-AEREA' },
-    ],
+      { id: 'u-pa-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-pa-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-pa-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-pa-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Brazil 2 (Big Country #3 - Base B)
   {
-    id: 'base-br-rio',
-    name: 'Base Naval de Ilha do Governador',
-    codeName: 'ATLANTIC SHIELD CITADEL',
+    id: 'base-br-capital',
+    name: 'Brasília National Defense Command Base',
+    codeName: 'CENTRAL DEFENSE REDOUBT',
     countryName: 'Brazil',
     countryCode: 'BR',
     flagUrl: 'https://flagcdn.com/w80/br.png',
-    lat: -22.812,
-    lng: -43.208,
-    dms: `22°48'43.2"S  43°12'28.8"W`,
-    status: 'Operational',
+    lat: -15.7975,
+    lng: -47.8919,
+    dms: `15°47'51.0"S 47°53'30.8"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-br2-1', timeAgo: '30m ago', type: 'logistics', text: 'Submarine squadron refueling and acoustic sensors calibrated.' },
+      { id: 'rep-br-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-br-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-br2-1', name: 'Troops', count: 620, type: 'infantry', code: 'FUZILEIROS-NAVAIS' },
-      { id: 'u-br2-2', name: 'AF-1 Skyhawk', count: 12, type: 'aircraft', code: 'VF-1-FALCOES' },
-      { id: 'u-br2-3', name: 'SK-105 Kürassier', count: 20, type: 'armor', code: 'CORPO-BLINDADO' },
-      { id: 'u-br2-4', name: 'Mistral 3 Naval Batteries', count: 8, type: 'air-defense', code: 'COASTAL-DEFENSE' },
-    ],
+      { id: 'u-br-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-br-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-br-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-br-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Argentina 1 (Big Country #4 - Base A)
   {
-    id: 'base-ar-palomar',
-    name: 'Base Aérea El Palomar',
-    codeName: 'PAMPAS DEFENSE FORTRESS',
+    id: 'base-ar-capital',
+    name: 'Buenos Aires Joint Strategic Citadel',
+    codeName: 'PAMPAS DEFENSE SHIELD',
     countryName: 'Argentina',
     countryCode: 'AR',
     flagUrl: 'https://flagcdn.com/w80/ar.png',
-    lat: -34.609,
-    lng: -58.602,
-    dms: `34°36'32.4"S  58°36'07.2"W`,
-    status: 'Operational',
+    lat: -34.6037,
+    lng: -58.3816,
+    dms: `34°36'13.3"S 58°22'53.8"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ar-1', timeAgo: '20m ago', type: 'intel', text: 'Radar radar surveillance sweeps covering Río de la Plata sectors.' },
+      { id: 'rep-ar-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ar-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ar-1', name: 'Troops', count: 520, type: 'infantry', code: 'BRIGADA-AEREA' },
-      { id: 'u-ar-2', name: 'F-16 Fighting Falcon', count: 24, type: 'aircraft', code: 'HALCONES-SQUADRON' },
-      { id: 'u-ar-3', name: 'TAM 2CA2 Tank', count: 32, type: 'armor', code: 'CABALLERIA-BLINDADA' },
-      { id: 'u-ar-4', name: 'RBS-70 SAM', count: 8, type: 'air-defense', code: 'DEFENSA-AEREA' },
-    ],
+      { id: 'u-ar-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ar-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ar-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ar-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Argentina 2 (Big Country #4 - Base B)
   {
-    id: 'base-ar-gallegos',
-    name: 'Base Aérea Río Gallegos',
-    codeName: 'PATAGONIA SOUTHERN REDOUBT',
-    countryName: 'Argentina',
-    countryCode: 'AR',
-    flagUrl: 'https://flagcdn.com/w80/ar.png',
-    lat: -51.609,
-    lng: -69.313,
-    dms: `51°36'32.4"S  69°18'46.8"W`,
-    status: 'Alert',
-    reports: [
-      { id: 'rep-ar2-1', timeAgo: '42m ago', type: 'defense', text: 'South Atlantic patrol flights completed with zero maritime infractions.' },
-    ],
-    units: [
-      { id: 'u-ar2-1', name: 'Troops', count: 380, type: 'infantry', code: 'REG-INF-MEC-24' },
-      { id: 'u-ar2-2', name: 'IA-63 Pampa III', count: 16, type: 'aircraft', code: 'PATAGONIA-FIGHTERS' },
-      { id: 'u-ar2-3', name: 'M113A2 APC', count: 25, type: 'armor', code: 'ESCUADRON-EXPLORACION' },
-      { id: 'u-ar2-4', name: 'Roland 2 Anti-Air', count: 6, type: 'air-defense', code: 'DEFENSA-ANTIAEREA' },
-    ],
-  },
-  // Colombia (CO)
-  {
-    id: 'base-co-palanquero',
-    name: 'Base Aérea Germán Olano',
-    codeName: 'ANDES EAGLE REDOUBT',
+    id: 'base-co-capital',
+    name: 'Bogotá Strategic Aerospace Redoubt',
+    codeName: 'ANDES GUARDIAN CITADEL',
     countryName: 'Colombia',
     countryCode: 'CO',
     flagUrl: 'https://flagcdn.com/w80/co.png',
-    lat: 5.49,
-    lng: -74.658,
-    dms: `5°29'24.0"N  74°39'28.8"W`,
-    status: 'Operational',
+    lat: 4.711,
+    lng: -74.0721,
+    dms: `04°42'39.6"N 74°04'19.6"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-co-1', timeAgo: '16m ago', type: 'defense', text: 'Kfir supersonic interceptors deployed on combat air patrol.' },
+      { id: 'rep-co-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-co-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-co-1', name: 'Troops', count: 480, type: 'infantry', code: 'COMANDO-ESPECIAL' },
-      { id: 'u-co-2', name: 'Kfir C10 Block 60', count: 20, type: 'aircraft', code: 'ESC-COMBATE-111' },
-      { id: 'u-co-3', name: 'LAV III Gladiator', count: 32, type: 'armor', code: 'CABALLERIA-MEC' },
-      { id: 'u-co-4', name: 'Barak MX Missile System', count: 8, type: 'air-defense', code: 'ESC-ANTIAEREO' },
-    ],
+      { id: 'u-co-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-co-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-co-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-co-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Chile (CL)
   {
-    id: 'base-cl-pudahuel',
-    name: 'Base Aérea Pudahuel',
-    codeName: 'CONDOR PEAK CITADEL',
+    id: 'base-cl-capital',
+    name: 'Santiago Andean Defense Bastion',
+    codeName: 'PACIFIC SOUTHERN SHIELD',
     countryName: 'Chile',
     countryCode: 'CL',
     flagUrl: 'https://flagcdn.com/w80/cl.png',
-    lat: -33.393,
-    lng: -70.785,
-    dms: `33°23'34.8"S  70°47'06.0"W`,
+    lat: -33.4489,
+    lng: -70.6693,
+    dms: `33°26'56.0"S 70°40'09.5"W`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-cl-1', timeAgo: '11m ago', type: 'defense', text: 'E-3D Sentry AWACS radar links active across Andean range.' },
+      { id: 'rep-cl-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-cl-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-cl-1', name: 'Troops', count: 500, type: 'infantry', code: 'FUERZAS-ESP-FACH' },
-      { id: 'u-cl-2', name: 'F-16C/D Block 50', count: 36, type: 'aircraft', code: 'GRUPO-AVIACION-3' },
-      { id: 'u-cl-3', name: 'Leopard 2A4CHL', count: 40, type: 'armor', code: 'BRIGADA-CORACEROS' },
-      { id: 'u-cl-4', name: 'NASAMS 2 Air Defense', count: 10, type: 'air-defense', code: 'ESC-DEFENSA-AEREA' },
-    ],
+      { id: 'u-cl-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-cl-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-cl-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-cl-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Peru (PE)
   {
-    id: 'base-pe-la-joya',
-    name: 'Base Aérea La Joya',
-    codeName: 'SOL DEL PACIFICO BASTION',
+    id: 'base-pe-capital',
+    name: 'Lima Coastal Defense Citadel',
+    codeName: 'SUN CITADEL REDOUBT',
     countryName: 'Peru',
     countryCode: 'PE',
     flagUrl: 'https://flagcdn.com/w80/pe.png',
-    lat: -16.797,
-    lng: -71.884,
-    dms: `16°47'49.2"S  71°53'02.4"W`,
-    status: 'Alert',
+    lat: -12.0464,
+    lng: -77.0428,
+    dms: `12°02'47.0"S 77°02'34.1"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-pe-1', timeAgo: '22m ago', type: 'defense', text: 'Mirage 2000P squadrons on high readiness runway alert.' },
+      { id: 'rep-pe-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-pe-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-pe-1', name: 'Troops', count: 420, type: 'infantry', code: 'DEFENSA-AEREA-FAP' },
-      { id: 'u-pe-2', name: 'Mirage 2000P', count: 12, type: 'aircraft', code: 'ESC-CAZA-412' },
-      { id: 'u-pe-3', name: 'MiG-29SE Fulcrum', count: 10, type: 'aircraft', code: 'ESC-CAZA-612' },
-      { id: 'u-pe-4', name: 'T-55 León 2', count: 35, type: 'armor', code: 'BLINDADOS-SUR' },
-      { id: 'u-pe-5', name: 'Pechora-2M SAM', count: 8, type: 'air-defense', code: 'RED-ANTIAEREA' },
-    ],
+      { id: 'u-pe-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-pe-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-pe-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-pe-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Venezuela (VE)
   {
-    id: 'base-ve-el-libertador',
-    name: 'Base Aérea El Libertador',
-    codeName: 'BOLIVARIAN STRATEGIC NEXUS',
+    id: 'base-ve-capital',
+    name: 'Caracas Northern Command Bastion',
+    codeName: 'AVILA FORTRESS COMMAND',
     countryName: 'Venezuela',
     countryCode: 'VE',
     flagUrl: 'https://flagcdn.com/w80/ve.png',
-    lat: 10.183,
-    lng: -67.558,
-    dms: `10°10'58.8"N  67°33'28.8"W`,
-    status: 'Alert',
+    lat: 10.4806,
+    lng: -66.9036,
+    dms: `10°28'50.2"N 66°54'13.0"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ve-1', timeAgo: '15m ago', type: 'defense', text: 'Su-30MK2 Flanker long-range Caribbean patrols active.' },
+      { id: 'rep-ve-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ve-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ve-1', name: 'Troops', count: 560, type: 'infantry', code: 'GUARDA-NACIONAL' },
-      { id: 'u-ve-2', name: 'Su-30MK2 Flanker-G', count: 22, type: 'aircraft', code: 'GRUPO-AEREO-11' },
-      { id: 'u-ve-3', name: 'T-72B1V Tank', count: 45, type: 'armor', code: 'BRIGADA-BLINDADA' },
-      { id: 'u-ve-4', name: 'S-300VM Antey-2500', count: 6, type: 'air-defense', code: 'SAM-STRATEGIC' },
-    ],
+      { id: 'u-ve-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ve-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ve-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ve-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-
-  // ================= EUROPE =================
-  // United Kingdom (GB)
   {
-    id: 'base-gb-waddington',
-    name: 'RAF Sovereign Citadel',
-    codeName: 'ALBION COMMAND REDOUBT',
+    id: 'base-gb-capital',
+    name: 'London Admiralty Joint Command Bastion',
+    codeName: 'WHITEHALL DEFENSE CITADEL',
     countryName: 'United Kingdom',
     countryCode: 'GB',
     flagUrl: 'https://flagcdn.com/w80/gb.png',
-    lat: 53.166,
-    lng: -0.524,
-    dms: `53°09'57.6"N  0°31'26.4"W`,
-    status: 'Operational',
+    lat: 51.5074,
+    lng: -0.1278,
+    dms: `51°30'26.6"N 00°07'40.1"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-gb-1', timeAgo: '15m ago', type: 'defense', text: 'North Sea airborne radar picket detected zero unidentified targets.' },
-      { id: 'rep-gb-2', timeAgo: '1h ago', type: 'urgent', text: 'Eurofighter Typhoon scrambles conducted in support of eastern perimeter.' },
+      { id: 'rep-gb-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-gb-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-gb-1', name: 'Troops', count: 450, type: 'infantry', code: 'ROYAL-REG' },
-      { id: 'u-gb-2', name: 'Eurofighter Typhoon', count: 36, type: 'aircraft', code: 'QRA-SQUADRON' },
-      { id: 'u-gb-3', name: 'F-35B', count: 18, type: 'aircraft', code: 'CARRIER-WING' },
-      { id: 'u-gb-4', name: 'Challenger 3', count: 28, type: 'armor', code: 'ROYAL-ARMOR' },
-      { id: 'u-gb-5', name: 'Sky Sabre', count: 8, type: 'air-defense', code: 'SHORAD' },
-    ],
+      { id: 'u-gb-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-gb-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-gb-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-gb-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // France (FR)
   {
-    id: 'base-fr-istres',
-    name: 'Base Aérienne 125 Hexagone',
-    codeName: 'CITADELLE DU RHÔNE',
+    id: 'base-fr-capital',
+    name: 'Paris Balard Hexagon Defense Nexus',
+    codeName: 'HEXAGONE NATIONAL BASTION',
     countryName: 'France',
     countryCode: 'FR',
     flagUrl: 'https://flagcdn.com/w80/fr.png',
-    lat: 43.522,
-    lng: 4.924,
-    dms: `43°31'19.2"N  4°55'26.4"E`,
+    lat: 48.8566,
+    lng: 2.3522,
+    dms: `48°51'23.8"N 02°21'07.9"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-fr-1', timeAgo: '20m ago', type: 'intel', text: 'Mediterranean satellite link locked onto southern naval fleet coordinates.' },
-      { id: 'rep-fr-2', timeAgo: '2h ago', type: 'urgent', text: 'Strategic deterrence wing completed nuclear-capable readiness verification.' },
+      { id: 'rep-fr-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-fr-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-fr-1', name: 'Troops', count: 600, type: 'infantry', code: 'LEGION-DET' },
-      { id: 'u-fr-2', name: 'Rafale C/B', count: 48, type: 'aircraft', code: 'AIR-FORCE-RAFALE' },
-      { id: 'u-fr-3', name: 'Mirage 2000-5', count: 24, type: 'aircraft', code: 'INTERCEPT-WING' },
-      { id: 'u-fr-4', name: 'Leclerc XLR', count: 36, type: 'armor', code: 'CHAR-COMBAT' },
-      { id: 'u-fr-5', name: 'SAMP/T Mamba', count: 10, type: 'air-defense', code: 'ASTER-30' },
-    ],
+      { id: 'u-fr-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-fr-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-fr-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-fr-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Germany (DE)
   {
-    id: 'base-de-ramstein',
-    name: 'Kaiserslautern Military Fortress',
-    codeName: 'TEUTONIC GATEWAY HQ',
+    id: 'base-de-capital',
+    name: 'Berlin Bendlerblock National Redoubt',
+    codeName: 'BRANDENBURG DEFENSE NEXUS',
     countryName: 'Germany',
     countryCode: 'DE',
     flagUrl: 'https://flagcdn.com/w80/de.png',
-    lat: 49.437,
-    lng: 7.601,
-    dms: `49°26'13.2"N  7°36'03.6"E`,
-    status: 'Operational',
+    lat: 52.52,
+    lng: 13.405,
+    dms: `52°31'12.0"N 13°24'18.0"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-de-1', timeAgo: '10m ago', type: 'logistics', text: 'Central European airlift hub operating at max dispatch tempo.' },
-      { id: 'rep-de-2', timeAgo: '1h ago', type: 'defense', text: 'Cyber command repelled 84 distributed network intrusion probes.' },
+      { id: 'rep-de-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-de-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-de-1', name: 'Troops', count: 800, type: 'infantry', code: 'PANZERGRENADIER' },
-      { id: 'u-de-2', name: 'Eurofighter EF-2000', count: 40, type: 'aircraft', code: 'LUFTWAFFE-WING' },
-      { id: 'u-de-3', name: 'Tornado IDS', count: 20, type: 'aircraft', code: 'STRIKE-FORCE' },
-      { id: 'u-de-4', name: 'Leopard 2A8', count: 54, type: 'armor', code: 'PANZER-DIVISION' },
-      { id: 'u-de-5', name: 'IRIS-T SLM', count: 14, type: 'air-defense', code: 'AIR-DEFENSE-NET' },
-    ],
+      { id: 'u-de-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-de-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-de-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-de-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Italy (IT)
   {
-    id: 'base-it-amendola',
-    name: 'Base Aerea Amendola',
-    codeName: 'ROMAN EAGLE CITADEL',
+    id: 'base-it-capital',
+    name: 'Rome Joint Operations Citadel',
+    codeName: 'CAPITOLINE CENTURION BASTION',
     countryName: 'Italy',
     countryCode: 'IT',
     flagUrl: 'https://flagcdn.com/w80/it.png',
-    lat: 41.539,
-    lng: 15.714,
-    dms: `41°32'20.4"N  15°42'50.4"E`,
+    lat: 41.9028,
+    lng: 12.4964,
+    dms: `41°54'10.1"N 12°29'47.0"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-it-1', timeAgo: '18m ago', type: 'defense', text: 'F-35A Lightning II stealth air patrols monitoring Adriatic airspace.' },
+      { id: 'rep-it-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-it-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-it-1', name: 'Troops', count: 520, type: 'infantry', code: 'BERSAGLIERI' },
-      { id: 'u-it-2', name: 'F-35A Lightning II', count: 30, type: 'aircraft', code: '32-STORMO' },
-      { id: 'u-it-3', name: 'Eurofighter Typhoon', count: 24, type: 'aircraft', code: 'CACCIA-INTERCETTORI' },
-      { id: 'u-it-4', name: 'Ariete C2 Tank', count: 32, type: 'armor', code: 'REPARTO-CORAZZATO' },
-      { id: 'u-it-5', name: 'SAMP/T Interceptor', count: 8, type: 'air-defense', code: 'DIFESA-AEREA' },
-    ],
+      { id: 'u-it-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-it-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-it-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-it-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Spain (ES)
   {
-    id: 'base-es-moron',
-    name: 'Base Aérea de Morón',
-    codeName: 'IBERIAN STRATEGIC GATE',
+    id: 'base-es-capital',
+    name: 'Madrid National Defense Bastion',
+    codeName: 'IBERIAN CITADEL SHIELD',
     countryName: 'Spain',
     countryCode: 'ES',
     flagUrl: 'https://flagcdn.com/w80/es.png',
-    lat: 37.175,
-    lng: -5.616,
-    dms: `37°10'30.0"N  5°36'57.6"W`,
-    status: 'Operational',
+    lat: 40.4168,
+    lng: -3.7038,
+    dms: `40°25'00.5"N 03°42'13.7"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-es-1', timeAgo: '25m ago', type: 'defense', text: 'Strait of Gibraltar radar surveillance sweeps confirmed all sea lanes clear.' },
+      { id: 'rep-es-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-es-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-es-1', name: 'Troops', count: 480, type: 'infantry', code: 'LEGION-ESP' },
-      { id: 'u-es-2', name: 'Eurofighter Typhoon', count: 34, type: 'aircraft', code: 'ALA-11' },
-      { id: 'u-es-3', name: 'EF-18M Hornet', count: 20, type: 'aircraft', code: 'ALA-12' },
-      { id: 'u-es-4', name: 'Leopardo 2E', count: 36, type: 'armor', code: 'BRIGADA-ACORAZADA' },
-      { id: 'u-es-5', name: 'NASAMS & Patriot', count: 10, type: 'air-defense', code: 'DEFENSA-AEREA' },
-    ],
+      { id: 'u-es-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-es-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-es-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-es-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Ukraine (UA)
   {
-    id: 'base-ua-vasylkiv',
-    name: 'Vasylkiv Air Guard Fortress',
-    codeName: 'GHOST GUARDIAN REDOUBT',
+    id: 'base-ua-capital',
+    name: 'Kyiv Dnieper Shield Bastion',
+    codeName: 'TRIDENT STEEL BASTION',
     countryName: 'Ukraine',
     countryCode: 'UA',
     flagUrl: 'https://flagcdn.com/w80/ua.png',
-    lat: 50.23,
-    lng: 30.3,
-    dms: `50°13'48.0"N  30°18'00.0"E`,
-    status: 'Alert',
+    lat: 50.4501,
+    lng: 30.5234,
+    dms: `50°27'00.4"N 30°31'24.2"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ua-1', timeAgo: '3m ago', type: 'defense', text: 'Mobile air defense teams neutralized incoming Shahed drone flightpath.' },
-      { id: 'rep-ua-2', timeAgo: '20m ago', type: 'urgent', text: 'We need air equipment, F-16 ordnance, and 155mm artillery shells immediately.' },
-      { id: 'rep-ua-3', timeAgo: '2h ago', type: 'intel', text: 'Frontline radar scans tracked low-altitude missile trajectories.' },
+      { id: 'rep-ua-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ua-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ua-1', name: 'Troops', count: 900, type: 'infantry', code: 'TACTICAL-AIR-BRIGADE' },
-      { id: 'u-ua-2', name: 'F-16 Fighting Falcon', count: 32, type: 'aircraft', code: 'DEFENSE-SQUADRON' },
-      { id: 'u-ua-3', name: 'MiG-29 Ghost Wing', count: 20, type: 'aircraft', code: 'INTERCEPT-FIGHTERS' },
-      { id: 'u-ua-4', name: 'Leopard 2A6 & Abrams', count: 45, type: 'armor', code: 'STRIKE-BRIGADE' },
-      { id: 'u-ua-5', name: 'Patriot & NASAMS', count: 12, type: 'air-defense', code: 'SKY-SHIELD' },
-    ],
+      { id: 'u-ua-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ua-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ua-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ua-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Poland (PL)
   {
-    id: 'base-pl-lask',
-    name: '32nd Tactical Air Base Łask',
+    id: 'base-pl-capital',
+    name: 'Warsaw Citadel Central Redoubt',
     codeName: 'WHITE EAGLE CITADEL',
     countryName: 'Poland',
     countryCode: 'PL',
     flagUrl: 'https://flagcdn.com/w80/pl.png',
-    lat: 51.551,
-    lng: 19.179,
-    dms: `51°33'03.6"N  19°10'44.4"E`,
+    lat: 52.2297,
+    lng: 21.0122,
+    dms: `52°13'46.9"N 21°00'43.9"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-pl-1', timeAgo: '8m ago', type: 'defense', text: 'Suwalki corridor early-warning electronic defense arrays locked.' },
+      { id: 'rep-pl-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-pl-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-pl-1', name: 'Troops', count: 700, type: 'infantry', code: 'WOJSKO-POLSKIE' },
-      { id: 'u-pl-2', name: 'F-35A Husarz', count: 24, type: 'aircraft', code: 'STEALTH-HUSARZ' },
-      { id: 'u-pl-3', name: 'F-16C Block 52+', count: 32, type: 'aircraft', code: 'JASTRZAB-WING' },
-      { id: 'u-pl-4', name: 'K2 Black Panther', count: 50, type: 'armor', code: 'CZARNA-DYWIZJA' },
-      { id: 'u-pl-5', name: 'Wisła Patriot PAC-3', count: 12, type: 'air-defense', code: 'WISLA-SHIELD' },
-    ],
+      { id: 'u-pl-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-pl-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-pl-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-pl-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Netherlands (NL)
   {
-    id: 'base-nl-volkel',
-    name: 'Volkel Air Base',
-    codeName: 'LOWLAND GUARDIAN BASTION',
+    id: 'base-nl-capital',
+    name: 'Amsterdam Maritime Shield Citadel',
+    codeName: 'NORTH SEA FORTRESS COMMAND',
     countryName: 'Netherlands',
     countryCode: 'NL',
     flagUrl: 'https://flagcdn.com/w80/nl.png',
-    lat: 51.657,
-    lng: 5.708,
-    dms: `51°39'25.2"N  5°42'28.8"E`,
+    lat: 52.3676,
+    lng: 4.9041,
+    dms: `52°22'03.4"N 04°54'14.8"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-nl-1', timeAgo: '14m ago', type: 'defense', text: 'F-35A Lightning II Quick Reaction Alert on 15-minute scramble status.' },
+      { id: 'rep-nl-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-nl-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-nl-1', name: 'Troops', count: 420, type: 'infantry', code: 'LUCHTTACTISCH' },
-      { id: 'u-nl-2', name: 'F-35A Lightning II', count: 34, type: 'aircraft', code: '312-SQUADRON' },
-      { id: 'u-nl-3', name: 'Boxer MRAV', count: 28, type: 'armor', code: 'PANSERINFANTERIE' },
-      { id: 'u-nl-4', name: 'Patriot & NASAMS', count: 8, type: 'air-defense', code: 'LUCHTVERDEDIGING' },
-    ],
+      { id: 'u-nl-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-nl-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-nl-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-nl-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Sweden (SE)
   {
-    id: 'base-se-satenas',
-    name: 'F 7 Såtenäs Air Fortress',
-    codeName: 'SCANDINAVIAN SHIELD',
+    id: 'base-se-capital',
+    name: 'Stockholm Baltic Defense Bastion',
+    codeName: 'TRE KRONOR CITADEL',
     countryName: 'Sweden',
     countryCode: 'SE',
     flagUrl: 'https://flagcdn.com/w80/se.png',
-    lat: 58.428,
-    lng: 12.714,
-    dms: `58°25'40.8"N  12°42'50.4"E`,
+    lat: 59.3293,
+    lng: 18.0686,
+    dms: `59°19'45.5"N 18°04'07.0"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-se-1', timeAgo: '12m ago', type: 'defense', text: 'JAS 39E Gripen road-base dispersal readiness exercises complete.' },
+      { id: 'rep-se-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-se-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-se-1', name: 'Troops', count: 480, type: 'infantry', code: 'SKARABORG-REG' },
-      { id: 'u-se-2', name: 'JAS 39C/E Gripen', count: 40, type: 'aircraft', code: 'FLYGVAPNET-WING' },
-      { id: 'u-se-3', name: 'Stridsvagn 122', count: 36, type: 'armor', code: 'PANSER-BRIGAD' },
-      { id: 'u-se-4', name: 'Luftvärnssystem 103 (Patriot)', count: 8, type: 'air-defense', code: 'LUFTVARN' },
-    ],
+      { id: 'u-se-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-se-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-se-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-se-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Norway (NO)
   {
-    id: 'base-no-orland',
-    name: 'Ørland Main Air Station',
-    codeName: 'FJORDS SENTINEL CITADEL',
+    id: 'base-no-capital',
+    name: 'Oslo Fjord Joint Operations Redoubt',
+    codeName: 'VIKING SHIELD CITADEL',
     countryName: 'Norway',
     countryCode: 'NO',
     flagUrl: 'https://flagcdn.com/w80/no.png',
-    lat: 63.699,
-    lng: 9.604,
-    dms: `63°41'56.4"N  9°36'14.4"E`,
+    lat: 59.9139,
+    lng: 10.7522,
+    dms: `59°54'50.0"N 10°45'07.9"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-no-1', timeAgo: '19m ago', type: 'defense', text: 'Barents Sea maritime surveillance flights monitored Russian submarine corridors.' },
+      { id: 'rep-no-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-no-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-no-1', name: 'Troops', count: 460, type: 'infantry', code: 'TELEMARK-BATALJON' },
-      { id: 'u-no-2', name: 'F-35A Lightning II', count: 42, type: 'aircraft', code: '332-SKVADRON' },
-      { id: 'u-no-3', name: 'Leopard 2A7NO', count: 28, type: 'armor', code: 'PANSERBATALJONEN' },
-      { id: 'u-no-4', name: 'NASAMS 3 High Mobility', count: 10, type: 'air-defense', code: 'LUFTVERNARTILLERI' },
-    ],
+      { id: 'u-no-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-no-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-no-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-no-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Finland (FI)
   {
-    id: 'base-fi-rovaniemi',
-    name: 'Rovaniemi Arctic Air Base',
-    codeName: 'LAPLAND ARCTIC CITADEL',
+    id: 'base-fi-capital',
+    name: 'Helsinki Arctic Defense Bastion',
+    codeName: 'KARELIAN FORTRESS NEXUS',
     countryName: 'Finland',
     countryCode: 'FI',
     flagUrl: 'https://flagcdn.com/w80/fi.png',
-    lat: 66.564,
-    lng: 25.83,
-    dms: `66°33'50.4"N  25°49'48.0"E`,
+    lat: 60.1699,
+    lng: 24.9384,
+    dms: `60°10'11.6"N 24°56'18.2"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-fi-1', timeAgo: '6m ago', type: 'defense', text: 'Arctic winter dispersed highway strip scrambles simulated with F/A-18s.' },
+      { id: 'rep-fi-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-fi-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-fi-1', name: 'Troops', count: 580, type: 'infantry', code: 'JAAKARI-PRIKAATI' },
-      { id: 'u-fi-2', name: 'F/A-18C Hornet', count: 32, type: 'aircraft', code: 'HAVITTAJALAIVUE-11' },
-      { id: 'u-fi-3', name: 'Leopard 2A6', count: 34, type: 'armor', code: 'PANSSARIPRIKAATI' },
-      { id: 'u-fi-4', name: 'David Sling & NASAMS', count: 10, type: 'air-defense', code: 'ILMATORJUNTA' },
-    ],
+      { id: 'u-fi-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-fi-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-fi-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-fi-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Switzerland (CH)
   {
-    id: 'base-ch-payerne',
-    name: 'Base Aérienne Payerne',
-    codeName: 'ALPINE REDOUBT NEXUS',
+    id: 'base-ch-capital',
+    name: 'Bern Alpine Defense Redoubt',
+    codeName: 'GOTTHARD NATIONAL CITADEL',
     countryName: 'Switzerland',
     countryCode: 'CH',
     flagUrl: 'https://flagcdn.com/w80/ch.png',
-    lat: 46.843,
-    lng: 6.915,
-    dms: `46°50'34.8"N  6°54'54.0"E`,
+    lat: 46.948,
+    lng: 7.4474,
+    dms: `46°56'52.8"N 07°26'50.6"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ch-1', timeAgo: '33m ago', type: 'defense', text: 'Subterranean alpine hangar alert status optimal with zero incursions.' },
+      { id: 'rep-ch-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ch-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ch-1', name: 'Troops', count: 380, type: 'infantry', code: 'FUSA-REG' },
-      { id: 'u-ch-2', name: 'F/A-18C Hornet', count: 28, type: 'aircraft', code: 'FLIEGERSTAFFEL-17' },
-      { id: 'u-ch-3', name: 'Panzer 87 Leo', count: 30, type: 'armor', code: 'PANZERBATAILLON' },
-      { id: 'u-ch-4', name: 'Patriot PAC-3 & Rapier', count: 8, type: 'air-defense', code: 'FLAB-BRIGADE' },
-    ],
+      { id: 'u-ch-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ch-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ch-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ch-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Greece (GR)
   {
-    id: 'base-gr-larissa',
-    name: 'Larissa 110 Combat Wing',
-    codeName: 'HELLENIC AEGEAN BASTION',
+    id: 'base-gr-capital',
+    name: 'Athens Aegean Joint Command Citadel',
+    codeName: 'HELLENIC OLYMPUS SHIELD',
     countryName: 'Greece',
     countryCode: 'GR',
     flagUrl: 'https://flagcdn.com/w80/gr.png',
-    lat: 39.65,
-    lng: 22.465,
-    dms: `39°39'00.0"N  22°27'54.0"E`,
-    status: 'Alert',
+    lat: 37.9838,
+    lng: 23.7275,
+    dms: `37°59'01.7"N 23°43'39.0"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-gr-1', timeAgo: '16m ago', type: 'defense', text: 'Aegean sea airspace patrols scrambled 4 F-16 Viper interceptors.' },
+      { id: 'rep-gr-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-gr-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-gr-1', name: 'Troops', count: 620, type: 'infantry', code: 'EVDZONOI-COMMAND' },
-      { id: 'u-gr-2', name: 'F-16V Viper', count: 38, type: 'aircraft', code: '337-SQUADRON' },
-      { id: 'u-gr-3', name: 'Rafale F3R', count: 20, type: 'aircraft', code: '332-FIGHTERS' },
-      { id: 'u-gr-4', name: 'Leopard 2A6 HEL', count: 44, type: 'armor', code: 'TE-THORAKISMENON' },
-      { id: 'u-gr-5', name: 'Patriot PAC-3 & S-300', count: 12, type: 'air-defense', code: 'AERAMYNA' },
-    ],
+      { id: 'u-gr-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-gr-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-gr-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-gr-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Portugal (PT)
   {
-    id: 'base-pt-monte-real',
-    name: 'Base Aérea Nº 5 Monte Real',
-    codeName: 'LUSITANIAN ATLANTIC SENTINEL',
+    id: 'base-pt-capital',
+    name: 'Lisbon Atlantic Maritime Bastion',
+    codeName: 'TAGUS GUARDIAN REDOUBT',
     countryName: 'Portugal',
     countryCode: 'PT',
     flagUrl: 'https://flagcdn.com/w80/pt.png',
-    lat: 39.832,
-    lng: -8.887,
-    dms: `39°49'55.2"N  8°53'13.2"W`,
-    status: 'Operational',
+    lat: 38.7223,
+    lng: -9.1393,
+    dms: `38°43'20.3"N 09°08'21.5"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-pt-1', timeAgo: '27m ago', type: 'defense', text: 'Atlantic acoustic sonar grid reports zero intrusions.' },
+      { id: 'rep-pt-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-pt-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-pt-1', name: 'Troops', count: 360, type: 'infantry', code: 'PARACAS-REG' },
-      { id: 'u-pt-2', name: 'F-16M Fighting Falcon', count: 24, type: 'aircraft', code: 'ESQ-201-FALCOES' },
-      { id: 'u-pt-3', name: 'Leopard 2A6', count: 22, type: 'armor', code: 'REG-CAVALARIA' },
-      { id: 'u-pt-4', name: 'Chaparral & Stinger', count: 6, type: 'air-defense', code: 'DEFESA-ANTIAEREA' },
-    ],
+      { id: 'u-pt-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-pt-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-pt-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-pt-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Romania (RO)
   {
-    id: 'base-ro-mihail-kogalniceanu',
-    name: 'Baza 57 Aeriană Kogălniceanu',
-    codeName: 'BLACK SEA BULWARK',
+    id: 'base-ro-capital',
+    name: 'Bucharest Eastern Shield Citadel',
+    codeName: 'CARPATHIAN SENTINEL NEXUS',
     countryName: 'Romania',
     countryCode: 'RO',
     flagUrl: 'https://flagcdn.com/w80/ro.png',
-    lat: 44.362,
-    lng: 28.488,
-    dms: `44°21'43.2"N  28°29'16.8"E`,
-    status: 'Alert',
+    lat: 44.4268,
+    lng: 26.1025,
+    dms: `44°25'36.5"N 26°06'09.0"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ro-1', timeAgo: '11m ago', type: 'defense', text: 'Black sea delta radar scans actively monitoring maritime approaches.' },
+      { id: 'rep-ro-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ro-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ro-1', name: 'Troops', count: 640, type: 'infantry', code: 'BATALIONUL-SPECIAL' },
-      { id: 'u-ro-2', name: 'F-16 Fighting Falcon', count: 32, type: 'aircraft', code: 'ESCADRILA-53' },
-      { id: 'u-ro-3', name: 'TR-85M1 Bizonul', count: 38, type: 'armor', code: 'BATALION-TANCURI' },
-      { id: 'u-ro-4', name: 'Patriot PAC-3 Batteries', count: 8, type: 'air-defense', code: 'REG-RACHETE-SOL-AER' },
-    ],
+      { id: 'u-ro-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ro-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ro-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ro-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Belgium (BE)
   {
-    id: 'base-be-florennes',
-    name: 'Florennes Air Base',
-    codeName: 'BRABANT DEFENSE CITADEL',
+    id: 'base-be-capital',
+    name: 'Brussels Allied Defense Nexus',
+    codeName: 'EUROPEAN NEXUS CITADEL',
     countryName: 'Belgium',
     countryCode: 'BE',
     flagUrl: 'https://flagcdn.com/w80/be.png',
-    lat: 50.243,
-    lng: 4.646,
-    dms: `50°14'34.8"N  4°38'45.6"E`,
-    status: 'Operational',
+    lat: 50.8503,
+    lng: 4.3517,
+    dms: `50°51'01.1"N 04°21'06.1"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-be-1', timeAgo: '21m ago', type: 'logistics', text: 'Modernized F-35A transition infrastructure certified operational.' },
+      { id: 'rep-be-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-be-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-be-1', name: 'Troops', count: 380, type: 'infantry', code: 'CHASSEURS-ARDENNAIS' },
-      { id: 'u-be-2', name: 'F-16 MLU / F-35A', count: 26, type: 'aircraft', code: '2-TACTICAL-WING' },
-      { id: 'u-be-3', name: 'Piranha IIIC DF90', count: 24, type: 'armor', code: 'BATAILLON-MEDIAN' },
-      { id: 'u-be-4', name: 'Mistral Air Defense', count: 6, type: 'air-defense', code: 'BATAILLON-ARTILLERIE' },
-    ],
+      { id: 'u-be-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-be-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-be-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-be-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Austria (AT)
   {
-    id: 'base-at-zeltweg',
-    name: 'Fliegerhorst Hinterstoisser Zeltweg',
-    codeName: 'DANUBE SHIELD REDOUBT',
+    id: 'base-at-capital',
+    name: 'Vienna Danube Strategic Redoubt',
+    codeName: 'DANUBE CITADEL SHIELD',
     countryName: 'Austria',
     countryCode: 'AT',
     flagUrl: 'https://flagcdn.com/w80/at.png',
-    lat: 47.203,
-    lng: 14.744,
-    dms: `47°12'10.8"N  14°44'38.4"E`,
-    status: 'Operational',
+    lat: 48.2082,
+    lng: 16.3738,
+    dms: `48°12'29.5"N 16°22'25.7"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-at-1', timeAgo: '35m ago', type: 'defense', text: 'Airspace surveillance scans reported no unauthorized altitude crossings.' },
+      { id: 'rep-at-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-at-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-at-1', name: 'Troops', count: 350, type: 'infantry', code: 'JAGERBATAILLON' },
-      { id: 'u-at-2', name: 'Eurofighter Typhoon', count: 15, type: 'aircraft', code: 'UBERWACHUNGSGESCHWADER' },
-      { id: 'u-at-3', name: 'Leopard 2A4', count: 26, type: 'armor', code: 'PANZERGRENADIER-13' },
-      { id: 'u-at-4', name: 'Mistral Anti-Air', count: 6, type: 'air-defense', code: 'FLUGABWEHRBATAILLON' },
-    ],
+      { id: 'u-at-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-at-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-at-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-at-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Czech Republic (CZ)
   {
-    id: 'base-cz-caslav',
-    name: '21st Tactical Air Force Base Čáslav',
-    codeName: 'BOHEMIAN APEX NEXUS',
+    id: 'base-cz-capital',
+    name: 'Prague Central Defense Bastion',
+    codeName: 'BOHEMIAN IRON SENTINEL',
     countryName: 'Czech Republic',
     countryCode: 'CZ',
     flagUrl: 'https://flagcdn.com/w80/cz.png',
-    lat: 49.94,
-    lng: 15.381,
-    dms: `49°56'24.0"N  15°22'51.6"E`,
+    lat: 50.0755,
+    lng: 14.4378,
+    dms: `50°04'31.8"N 14°26'16.1"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-cz-1', timeAgo: '17m ago', type: 'defense', text: 'JAS 39C Gripen live intercept training drills completed.' },
+      { id: 'rep-cz-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-cz-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-cz-1', name: 'Troops', count: 420, type: 'infantry', code: 'VYSADKOVY-PLUK' },
-      { id: 'u-cz-2', name: 'JAS 39C Gripen', count: 14, type: 'aircraft', code: '211-TACTICAL-SQ' },
-      { id: 'u-cz-3', name: 'L-159 ALCA', count: 16, type: 'aircraft', code: '212-TACTICAL-SQ' },
-      { id: 'u-cz-4', name: 'T-72M4 CZ Tank', count: 30, type: 'armor', code: 'TANKOVY-PRAPOR' },
-      { id: 'u-cz-5', name: 'SPYDER SAM System', count: 8, type: 'air-defense', code: 'PROTIVZDUSNA-OBRANA' },
-    ],
+      { id: 'u-cz-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-cz-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-cz-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-cz-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-
-  // ================= EURASIA & MIDDLE EAST =================
-  // Russia 1 (Big Country #5 - Base A)
   {
-    id: 'base-ru-kubinka',
-    name: 'Kubinka Aerospace Fortress',
-    codeName: 'KREMLIN IRON REDOUBT',
+    id: 'base-ru-capital',
+    name: 'Moscow National Defense Control Center',
+    codeName: 'KREMLIN IRON NEXUS',
     countryName: 'Russia',
     countryCode: 'RU',
     flagUrl: 'https://flagcdn.com/w80/ru.png',
-    lat: 55.611,
-    lng: 36.65,
-    dms: `55°36'39.6"N  36°39'00.0"E`,
-    status: 'Alert',
-    reports: [
-      { id: 'rep-ru-1', timeAgo: '7m ago', type: 'defense', text: 'We repelled 20 drone strike heading for moscow.' },
-      { id: 'rep-ru-2', timeAgo: '25m ago', type: 'urgent', text: 'We need air equipment and supplementary electronic jamming pods.' },
-      { id: 'rep-ru-3', timeAgo: '2h ago', type: 'intel', text: 'Western perimeter long-range radar arrays scanning Baltic sector.' },
-    ],
-    units: [
-      { id: 'u-ru-1', name: 'Troops', count: 1400, type: 'infantry', code: 'GUARDS-MOTOR-RIFLE' },
-      { id: 'u-ru-2', name: 'Su-57 Felon', count: 20, type: 'aircraft', code: '5TH-GEN-STEALTH' },
-      { id: 'u-ru-3', name: 'Su-35S Flanker-E', count: 48, type: 'aircraft', code: 'AIR-DOMINANCE' },
-      { id: 'u-ru-4', name: 'MiG-31BM Foxhound', count: 24, type: 'aircraft', code: 'HYPERSONIC-KINZHAL' },
-      { id: 'u-ru-5', name: 'T-90M Proryv', count: 90, type: 'armor', code: 'HEAVY-ARMOR-GUARDS' },
-      { id: 'u-ru-6', name: 'S-400 Triumf & S-500', count: 16, type: 'air-defense', code: 'AIR-DEFENSE-DIV' },
-    ],
-  },
-  // Russia 2 (Big Country #5 - Base B)
-  {
-    id: 'base-ru-vladivostok',
-    name: 'Pacific Fleet Bastion Vladivostok',
-    codeName: 'EASTERN OCEAN CITADEL',
-    countryName: 'Russia',
-    countryCode: 'RU',
-    flagUrl: 'https://flagcdn.com/w80/ru.png',
-    lat: 43.119,
-    lng: 131.886,
-    dms: `43°07'08.4"N  131°53'09.6"E`,
+    lat: 55.7558,
+    lng: 37.6173,
+    dms: `55°45'20.9"N 37°37'02.3"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ru2-1', timeAgo: '30m ago', type: 'defense', text: 'Sea of Japan electronic surveillance patrols operating at high frequency.' },
+      { id: 'rep-ru-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ru-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ru2-1', name: 'Troops', count: 950, type: 'infantry', code: 'NAVAL-INFANTRY' },
-      { id: 'u-ru2-2', name: 'Su-30SM2 Flanker', count: 32, type: 'aircraft', code: 'PACIFIC-AVIATION' },
-      { id: 'u-ru2-3', name: 'T-80BVM Arctic', count: 50, type: 'armor', code: 'PACIFIC-ARMOR' },
-      { id: 'u-ru2-4', name: 'Bastion-P & Pantsir-S1', count: 14, type: 'air-defense', code: 'COASTAL-SAM' },
-    ],
+      { id: 'u-ru-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ru-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ru-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ru-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Turkey (TR)
   {
-    id: 'base-tr-incirlik',
-    name: 'Incirlik Joint Command Nexus',
-    codeName: 'ANATOLIAN CRESCENT BASTION',
+    id: 'base-tr-capital',
+    name: 'Ankara Anatolian Citadel',
+    codeName: 'ANATOLIAN CRESCENT SHIELD',
     countryName: 'Turkey',
     countryCode: 'TR',
     flagUrl: 'https://flagcdn.com/w80/tr.png',
-    lat: 37.0,
-    lng: 35.42,
-    dms: `37°00'00.0"N  35°25'12.0"E`,
-    status: 'Operational',
+    lat: 39.9334,
+    lng: 32.8597,
+    dms: `39°56'00.2"N 32°51'34.9"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-tr-1', timeAgo: '25m ago', type: 'defense', text: 'Bayraktar TB2 and Akinci UCAV surveillance orbits operating along coast.' },
-      { id: 'rep-tr-2', timeAgo: '1h ago', type: 'intel', text: 'Eastern Mediterranean electronic listening posts intercept signal traffic.' },
+      { id: 'rep-tr-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-tr-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-tr-1', name: 'Troops', count: 680, type: 'infantry', code: 'COMMANDO-BRIGADE' },
-      { id: 'u-tr-2', name: 'F-16C Block 50+', count: 48, type: 'aircraft', code: 'FALCON-SQUADRON' },
-      { id: 'u-tr-3', name: 'Bayraktar Kızılelma', count: 18, type: 'aircraft', code: 'UNMANNED-STEALTH' },
-      { id: 'u-tr-4', name: 'Altay Main Battle Tank', count: 42, type: 'armor', code: 'ARMORED-DIV' },
-      { id: 'u-tr-5', name: 'Hisar-O+ / Siper', count: 10, type: 'air-defense', code: 'AIR-DEFENSE-SYS' },
-    ],
+      { id: 'u-tr-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-tr-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-tr-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-tr-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Israel (IL)
   {
-    id: 'base-il-hatzerim',
-    name: 'Hatzerim Air Bastion',
-    codeName: 'IRON SHIELD NEXUS',
+    id: 'base-il-capital',
+    name: 'Jerusalem HaKirya Defense Bastion',
+    codeName: 'IRON DOME STRATEGIC NEXUS',
     countryName: 'Israel',
     countryCode: 'IL',
     flagUrl: 'https://flagcdn.com/w80/il.png',
-    lat: 31.233,
-    lng: 34.72,
-    dms: `31°13'58.8"N  34°43'12.0"E`,
-    status: 'Alert',
-    reports: [
-      { id: 'rep-il-1', timeAgo: '4m ago', type: 'defense', text: 'Iron Dome and Arrow-3 batteries neutralized incoming missile telemetry.' },
-    ],
-    units: [
-      { id: 'u-il-1', name: 'Troops', count: 850, type: 'infantry', code: 'SAYERET-MATKAL' },
-      { id: 'u-il-2', name: 'F-35I Adir', count: 36, type: 'aircraft', code: 'STEALTH-ADIR' },
-      { id: 'u-il-3', name: 'F-15I Raam', count: 25, type: 'aircraft', code: 'STRIKE-RAAM' },
-      { id: 'u-il-4', name: 'Merkava Mk 4M Barak', count: 65, type: 'armor', code: 'ARMORED-CORPS' },
-      { id: 'u-il-5', name: 'Iron Dome & David Sling', count: 18, type: 'air-defense', code: 'TIERED-DEFENSE' },
-    ],
-  },
-  // Saudi Arabia 1 (Big Country #6 - Base A)
-  {
-    id: 'base-sa-prince-sultan',
-    name: 'Prince Sultan Air Base Central',
-    codeName: 'DESERT EAGLE CITADEL',
-    countryName: 'Saudi Arabia',
-    countryCode: 'SA',
-    flagUrl: 'https://flagcdn.com/w80/sa.png',
-    lat: 24.062,
-    lng: 47.581,
-    dms: `24°03'43.2"N  47°34'51.6"E`,
+    lat: 31.7683,
+    lng: 35.2137,
+    dms: `31°46'05.9"N 35°12'49.3"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-sa-1', timeAgo: '12m ago', type: 'defense', text: 'Patriot PAC-3 radar arrays scanning Gulf airspace corridors.' },
+      { id: 'rep-il-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-il-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-sa-1', name: 'Troops', count: 800, type: 'infantry', code: 'ROYAL-GUARD' },
-      { id: 'u-sa-2', name: 'F-15SA Advanced Eagle', count: 52, type: 'aircraft', code: 'RSAF-SQUADRON' },
-      { id: 'u-sa-3', name: 'Eurofighter Typhoon', count: 36, type: 'aircraft', code: 'DESERT-TYPHOON' },
-      { id: 'u-sa-4', name: 'M1A2S Abrams', count: 60, type: 'armor', code: 'ARMORED-BRIGADE' },
-      { id: 'u-sa-5', name: 'Patriot & THAAD Batteries', count: 14, type: 'air-defense', code: 'ROYAL-AIR-DEFENSE' },
-    ],
+      { id: 'u-il-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-il-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-il-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-il-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Saudi Arabia 2 (Big Country #6 - Base B)
   {
-    id: 'base-sa-king-abdulaziz',
-    name: 'King Abdulaziz Air Base Dhahran',
-    codeName: 'EASTERN PERFECTOR REDOUBT',
+    id: 'base-sa-capital',
+    name: 'Riyadh Royal Military Command Bastion',
+    codeName: 'DESERT FALCON CITADEL',
     countryName: 'Saudi Arabia',
     countryCode: 'SA',
     flagUrl: 'https://flagcdn.com/w80/sa.png',
-    lat: 26.265,
-    lng: 50.152,
-    dms: `26°15'54.0"N  50°09'07.2"E`,
-    status: 'Operational',
+    lat: 24.7136,
+    lng: 46.6753,
+    dms: `24°42'49.0"N 46°40'31.1"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-sa2-1', timeAgo: '26m ago', type: 'intel', text: 'Arabian Gulf oil shipping routes monitored by radar patrol aircraft.' },
+      { id: 'rep-sa-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-sa-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-sa2-1', name: 'Troops', count: 620, type: 'infantry', code: 'NATIONAL-GUARD' },
-      { id: 'u-sa2-2', name: 'Tornado IDS', count: 28, type: 'aircraft', code: 'STRIKE-WING' },
-      { id: 'u-sa2-3', name: 'AMX-30SA', count: 35, type: 'armor', code: 'COASTAL-ARMOR' },
-      { id: 'u-sa2-4', name: 'Skyguard C-RAM', count: 8, type: 'air-defense', code: 'SHORAD-NET' },
-    ],
+      { id: 'u-sa-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-sa-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-sa-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-sa-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Iran (IR)
   {
-    id: 'base-ir-isfahan',
-    name: '8th Tactical Fighter Base Isfahan',
-    codeName: 'PERSIAN IRON MOUNTAIN',
+    id: 'base-ir-capital',
+    name: 'Tehran Central Defense Redoubt',
+    codeName: 'ZAGROS LION CITADEL',
     countryName: 'Iran',
     countryCode: 'IR',
     flagUrl: 'https://flagcdn.com/w80/ir.png',
-    lat: 32.751,
-    lng: 51.862,
-    dms: `32°45'03.6"N  51°51'43.2"E`,
-    status: 'Alert',
+    lat: 35.6892,
+    lng: 51.389,
+    dms: `35°41'21.1"N 51°23'20.4"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ir-1', timeAgo: '8m ago', type: 'defense', text: 'Subterranean missile silos in readiness condition alpha.' },
+      { id: 'rep-ir-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ir-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ir-1', name: 'Troops', count: 900, type: 'infantry', code: 'IRGC-QUDS' },
-      { id: 'u-ir-2', name: 'F-14A Tomcat', count: 24, type: 'aircraft', code: 'PERSIAN-CATS' },
-      { id: 'u-ir-3', name: 'MiG-29 & Su-24', count: 26, type: 'aircraft', code: 'STRIKE-SQUADRON' },
-      { id: 'u-ir-4', name: 'Karrar & T-72S', count: 65, type: 'armor', code: 'ARMORED-DIV' },
-      { id: 'u-ir-5', name: 'Bavar-373 & S-300PMU2', count: 14, type: 'air-defense', code: 'AIR-DEFENSE-CORPS' },
-    ],
+      { id: 'u-ir-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ir-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ir-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ir-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // United Arab Emirates (AE)
   {
-    id: 'base-ae-al-dhafra',
-    name: 'Al Dhafra Air Base',
-    codeName: 'EMIRATES GOLDEN HORIZON',
+    id: 'base-ae-capital',
+    name: 'Abu Dhabi Gulf Defense Citadel',
+    codeName: 'ARABIAN FALCON BASTION',
     countryName: 'United Arab Emirates',
     countryCode: 'AE',
     flagUrl: 'https://flagcdn.com/w80/ae.png',
-    lat: 24.248,
-    lng: 54.547,
-    dms: `24°14'52.8"N  54°32'49.2"E`,
+    lat: 24.4539,
+    lng: 54.3773,
+    dms: `24°27'14.0"N 54°22'38.3"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ae-1', timeAgo: '15m ago', type: 'defense', text: 'THAAD ballistic missile intercept radars active across Persian Gulf sector.' },
+      { id: 'rep-ae-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ae-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ae-1', name: 'Troops', count: 580, type: 'infantry', code: 'PRESIDENTIAL-GUARD' },
-      { id: 'u-ae-2', name: 'Mirage 2000-9', count: 32, type: 'aircraft', code: 'SHAHIN-WING' },
-      { id: 'u-ae-3', name: 'F-16E/F Block 60', count: 42, type: 'aircraft', code: 'DESERT-FALCON' },
-      { id: 'u-ae-4', name: 'Leclerc Tropicalisé', count: 48, type: 'armor', code: 'EMIRATES-ARMOR' },
-      { id: 'u-ae-5', name: 'THAAD & Patriot PAC-3', count: 12, type: 'air-defense', code: 'SHIELD-AE' },
-    ],
+      { id: 'u-ae-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ae-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ae-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ae-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Qatar (QA)
   {
-    id: 'base-qa-al-udeid',
-    name: 'Al Udeid Forward Redoubt',
-    codeName: 'GULF SENTINEL COMMAND',
+    id: 'base-qa-capital',
+    name: 'Doha Al Udeid Strategic Nexus',
+    codeName: 'PERSIAN GULF SENTINEL',
     countryName: 'Qatar',
     countryCode: 'QA',
     flagUrl: 'https://flagcdn.com/w80/qa.png',
-    lat: 25.117,
-    lng: 51.315,
-    dms: `25°07'01.2"N  51°18'54.0"E`,
+    lat: 25.2854,
+    lng: 51.531,
+    dms: `25°17'07.4"N 51°31'51.6"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-qa-1', timeAgo: '20m ago', type: 'logistics', text: 'Air Operations Center central telemetry data link verified.' },
+      { id: 'rep-qa-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-qa-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-qa-1', name: 'Troops', count: 450, type: 'infantry', code: 'EMIRI-GUARD' },
-      { id: 'u-qa-2', name: 'Rafale DQ/EQ', count: 36, type: 'aircraft', code: 'AL-ADIYAT-SQ' },
-      { id: 'u-qa-3', name: 'F-15QA Ababil', count: 30, type: 'aircraft', code: 'ABABIL-WING' },
-      { id: 'u-qa-4', name: 'Leopard 2A7+ QAT', count: 32, type: 'armor', code: 'EMIRI-ARMOR' },
-      { id: 'u-qa-5', name: 'Patriot PAC-3 & NASAMS', count: 10, type: 'air-defense', code: 'AIR-DEFENSE-NET' },
-    ],
+      { id: 'u-qa-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-qa-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-qa-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-qa-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Iraq (IQ)
   {
-    id: 'base-iq-balad',
-    name: 'Balad Air Base Fortress',
-    codeName: 'MESOPOTAMIAN REDOUBT',
+    id: 'base-iq-capital',
+    name: 'Baghdad Central Joint Redoubt',
+    codeName: 'MESOPOTAMIAN CITADEL',
     countryName: 'Iraq',
     countryCode: 'IQ',
     flagUrl: 'https://flagcdn.com/w80/iq.png',
-    lat: 33.935,
-    lng: 44.356,
-    dms: `33°56'06.0"N  44°21'21.6"E`,
-    status: 'Alert',
+    lat: 33.3152,
+    lng: 44.3661,
+    dms: `33°18'54.7"N 44°21'58.0"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-iq-1', timeAgo: '13m ago', type: 'defense', text: 'Perimeter anti-drone radar surveillance scanning surrounding sectors.' },
+      { id: 'rep-iq-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-iq-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-iq-1', name: 'Troops', count: 680, type: 'infantry', code: 'COUNTER-TERRORISM' },
-      { id: 'u-iq-2', name: 'F-16IQ Fighting Falcon', count: 28, type: 'aircraft', code: '9TH-FIGHTER-SQ' },
-      { id: 'u-iq-3', name: 'T-90S & M1A1M', count: 50, type: 'armor', code: '9TH-ARMORED-DIV' },
-      { id: 'u-iq-4', name: 'Pantsir-S1 Air Defense', count: 10, type: 'air-defense', code: 'AIR-DEFENSE-IQ' },
-    ],
+      { id: 'u-iq-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-iq-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-iq-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-iq-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Kazakhstan 1 (Big Country #7 - Base A)
   {
-    id: 'base-kz-karaganda',
-    name: 'Karaganda Sary-Arka Air Base',
-    codeName: 'STEPPE IRON CITADEL',
+    id: 'base-kz-capital',
+    name: 'Astana Central Military Command Bastion',
+    codeName: 'STEPPE GOLDEN EAGLE',
     countryName: 'Kazakhstan',
     countryCode: 'KZ',
     flagUrl: 'https://flagcdn.com/w80/kz.png',
-    lat: 49.671,
-    lng: 73.334,
-    dms: `49°40'15.6"N  73°20'02.4"E`,
-    status: 'Operational',
+    lat: 51.1694,
+    lng: 71.4491,
+    dms: `51°10'09.8"N 71°26'56.8"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-kz-1', timeAgo: '29m ago', type: 'defense', text: 'Central Eurasian airspace long-range interceptor sweep completed.' },
+      { id: 'rep-kz-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-kz-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-kz-1', name: 'Troops', count: 600, type: 'infantry', code: 'AIRBORNE-ASSAULT' },
-      { id: 'u-kz-2', name: 'Su-30SM Flanker', count: 32, type: 'aircraft', code: '610-AIR-BASE' },
-      { id: 'u-kz-3', name: 'MiG-31BM Foxhound', count: 18, type: 'aircraft', code: 'HIGH-ALTITUDE' },
-      { id: 'u-kz-4', name: 'T-72BA Tanks', count: 45, type: 'armor', code: 'ARMORED-BRIGADE' },
-      { id: 'u-kz-5', name: 'S-300PMU-2 Favorit', count: 10, type: 'air-defense', code: 'ANTI-AIRCRAFT' },
-    ],
+      { id: 'u-kz-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-kz-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-kz-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-kz-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Kazakhstan 2 (Big Country #7 - Base B)
   {
-    id: 'base-kz-aktau',
-    name: 'Aktau Caspian Bastion',
-    codeName: 'CASPIAN GUARDIAN REDOUBT',
-    countryName: 'Kazakhstan',
-    countryCode: 'KZ',
-    flagUrl: 'https://flagcdn.com/w80/kz.png',
-    lat: 43.86,
-    lng: 51.092,
-    dms: `43°51'36.0"N  51°05'31.2"E`,
-    status: 'Operational',
-    reports: [
-      { id: 'rep-kz2-1', timeAgo: '40m ago', type: 'logistics', text: 'Caspian sea maritime oil facility patrol vessels deployed.' },
-    ],
-    units: [
-      { id: 'u-kz2-1', name: 'Troops', count: 420, type: 'infantry', code: 'NAVAL-BRIGADE' },
-      { id: 'u-kz2-2', name: 'Su-27UBM2', count: 16, type: 'aircraft', code: 'COASTAL-FIGHTERS' },
-      { id: 'u-kz2-3', name: 'BTR-82A APC', count: 30, type: 'armor', code: 'MECH-INFANTRY' },
-      { id: 'u-kz2-4', name: 'Tor-M2E Missiles', count: 6, type: 'air-defense', code: 'CASPIAN-SHIELD' },
-    ],
-  },
-
-  // ================= ASIA & PACIFIC =================
-  // China 1 (Big Country #8 - Base A)
-  {
-    id: 'base-cn-beijing',
-    name: 'Northern Theater Aerospace Nexus',
-    codeName: 'DRAGON REDOUBT APEX',
+    id: 'base-cn-capital',
+    name: 'Beijing Central Military Commission Citadel',
+    codeName: 'DRAGON SOVEREIGN SHIELD',
     countryName: 'China',
     countryCode: 'CN',
     flagUrl: 'https://flagcdn.com/w80/cn.png',
-    lat: 39.914,
-    lng: 116.392,
-    dms: `39°54'50.4"N  116°23'31.2"E`,
+    lat: 39.9042,
+    lng: 116.4074,
+    dms: `39°54'15.1"N 116°24'26.6"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-cn-1', timeAgo: '8m ago', type: 'defense', text: 'J-20 stealth patrol flights confirmed zero unauthorized airspace breaches.' },
-      { id: 'rep-cn-2', timeAgo: '1h ago', type: 'intel', text: 'Northern radar perimeter telemetry locked onto high-altitude tracks.' },
+      { id: 'rep-cn-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-cn-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-cn-1', name: 'Troops', count: 1600, type: 'infantry', code: 'PLA-HONOR-GUARD' },
-      { id: 'u-cn-2', name: 'J-20 Mighty Dragon', count: 48, type: 'aircraft', code: 'STEALTH-WING' },
-      { id: 'u-cn-3', name: 'J-16 Flanker-D', count: 40, type: 'aircraft', code: 'MULTI-ROLE' },
-      { id: 'u-cn-4', name: 'Type 99A Tank', count: 85, type: 'armor', code: 'HEAVY-ARMOR' },
-      { id: 'u-cn-5', name: 'HQ-9B System', count: 18, type: 'air-defense', code: 'STRATEGIC-SAM' },
-    ],
+      { id: 'u-cn-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-cn-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-cn-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-cn-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // China 2 (Big Country #8 - Base B)
   {
-    id: 'base-cn-yulin',
-    name: 'Yulin Southern Naval Bastion',
-    codeName: 'SOUTH SEA CITADEL',
-    countryName: 'China',
-    countryCode: 'CN',
-    flagUrl: 'https://flagcdn.com/w80/cn.png',
-    lat: 18.225,
-    lng: 109.566,
-    dms: `18°13'30.0"N  109°33'57.6"E`,
-    status: 'Fortified',
-    reports: [
-      { id: 'rep-cn2-1', timeAgo: '19m ago', type: 'intel', text: 'Submarine underground caverns operating at ready alert condition.' },
-    ],
-    units: [
-      { id: 'u-cn2-1', name: 'Troops', count: 1100, type: 'infantry', code: 'PLAN-MARINES' },
-      { id: 'u-cn2-2', name: 'J-15 Flying Shark', count: 36, type: 'aircraft', code: 'CARRIER-WING' },
-      { id: 'u-cn2-3', name: 'Type 15 Light Tank', count: 45, type: 'armor', code: 'AMPHIBIOUS-ARMOR' },
-      { id: 'u-cn2-4', name: 'HQ-22 Long Range SAM', count: 14, type: 'air-defense', code: 'COASTAL-DEFENSE' },
-    ],
-  },
-  // Japan (JP)
-  {
-    id: 'base-jp-misawa',
-    name: 'Misawa Multi-Domain Fortress',
-    codeName: 'PACIFIC RISING CITADEL',
+    id: 'base-jp-capital',
+    name: 'Tokyo Ichigaya Joint Defense Complex',
+    codeName: 'RISING SUN CITADEL',
     countryName: 'Japan',
     countryCode: 'JP',
     flagUrl: 'https://flagcdn.com/w80/jp.png',
-    lat: 40.703,
-    lng: 141.368,
-    dms: `40°42'10.8"N  141°22'04.8"E`,
+    lat: 35.6762,
+    lng: 139.6503,
+    dms: `35°40'34.3"N 139°39'01.1"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-jp-1', timeAgo: '12m ago', type: 'defense', text: 'JASDF F-35A scrambled to intercept unidentified maritime aircraft over Sea of Japan.' },
-      { id: 'rep-jp-2', timeAgo: '1h ago', type: 'intel', text: 'Aegis ballistic missile tracking radar locked onto test flight trajectory.' },
+      { id: 'rep-jp-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-jp-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-jp-1', name: 'Troops', count: 750, type: 'infantry', code: 'JGSDF-BRIGADE' },
-      { id: 'u-jp-2', name: 'F-35A Lightning II', count: 40, type: 'aircraft', code: '301-TACTICAL-SQ' },
-      { id: 'u-jp-3', name: 'F-2 Viper Zero', count: 32, type: 'aircraft', code: '3-TACTICAL-WING' },
-      { id: 'u-jp-4', name: 'Type 10 Tank', count: 45, type: 'armor', code: 'JGSDF-ARMOR' },
-      { id: 'u-jp-5', name: 'Type 03 Chu-SAM', count: 12, type: 'air-defense', code: 'MID-TIER-SAM' },
-    ],
+      { id: 'u-jp-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-jp-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-jp-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-jp-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // India 1 (Big Country #9 - Base A)
   {
-    id: 'base-in-ambala',
-    name: 'Ambala Golden Arrow Citadel',
-    codeName: 'WESTERN THEATER REDOUBT',
+    id: 'base-in-capital',
+    name: 'New Delhi Integrated Defense Headquarters',
+    codeName: 'GOLDEN CHAKRA BASTION',
     countryName: 'India',
     countryCode: 'IN',
     flagUrl: 'https://flagcdn.com/w80/in.png',
-    lat: 30.369,
-    lng: 76.817,
-    dms: `30°22'08.4"N  76°49'01.2"E`,
-    status: 'Alert',
-    reports: [
-      { id: 'rep-in-1', timeAgo: '10m ago', type: 'defense', text: 'Rafale squadrons conducted high-altitude air superiority maneuvers along northern sector.' },
-      { id: 'rep-in-2', timeAgo: '45m ago', type: 'urgent', text: 'Border radar outpost detected unmanned surveillance blip 50km west.' },
-    ],
-    units: [
-      { id: 'u-in-1', name: 'Troops', count: 950, type: 'infantry', code: 'GARUD-COMMANDOS' },
-      { id: 'u-in-2', name: 'Rafale DH/EH', count: 36, type: 'aircraft', code: '17-SQ-GOLDEN-ARROWS' },
-      { id: 'u-in-3', name: 'Su-30MKI Flanker', count: 48, type: 'aircraft', code: 'FLANKER-WING' },
-      { id: 'u-in-4', name: 'T-90 Bhishma', count: 70, type: 'armor', code: 'ARMORED-CORPS' },
-      { id: 'u-in-5', name: 'S-400 Sudarshan Chakra', count: 14, type: 'air-defense', code: 'SUDARSHAN-AIR' },
-    ],
-  },
-  // India 2 (Big Country #9 - Base B)
-  {
-    id: 'base-in-hasimara',
-    name: 'Hasimara Eastern Bastion',
-    codeName: 'HIMALAYAN TIGER NEXUS',
-    countryName: 'India',
-    countryCode: 'IN',
-    flagUrl: 'https://flagcdn.com/w80/in.png',
-    lat: 26.702,
-    lng: 89.37,
-    dms: `26°42'07.2"N  89°22'12.0"E`,
+    lat: 28.6139,
+    lng: 77.209,
+    dms: `28°36'50.0"N 77°12'32.4"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-in2-1', timeAgo: '28m ago', type: 'intel', text: 'Himalayan mountain passes scanned by Phalcon AWACS radar pickets.' },
+      { id: 'rep-in-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-in-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-in2-1', name: 'Troops', count: 820, type: 'infantry', code: 'GORKHA-RIFLES' },
-      { id: 'u-in2-2', name: 'Rafale India', count: 20, type: 'aircraft', code: '101-SQ-FALCONS' },
-      { id: 'u-in2-3', name: 'Arjun Mk 1A', count: 38, type: 'armor', code: 'INDIGENOUS-ARMOR' },
-      { id: 'u-in2-4', name: 'Akash-NG Missile Batteries', count: 12, type: 'air-defense', code: 'SURFACE-AIR-NET' },
-    ],
+      { id: 'u-in-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-in-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-in-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-in-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // South Korea (KR)
   {
-    id: 'base-kr-osan',
-    name: 'Osan Tactical Aerospace Hub',
+    id: 'base-kr-capital',
+    name: 'Seoul Capital Defense Command',
     codeName: 'TIGER SHIELD CITADEL',
     countryName: 'South Korea',
     countryCode: 'KR',
     flagUrl: 'https://flagcdn.com/w80/kr.png',
-    lat: 37.091,
-    lng: 127.03,
-    dms: `37°05'27.6"N  127°01'48.0"E`,
-    status: 'Alert',
+    lat: 37.5665,
+    lng: 126.978,
+    dms: `37°33'59.4"N 126°58'40.8"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-kr-1', timeAgo: '5m ago', type: 'defense', text: 'DMZ early warning radars confirm all perimeter defensive grids active.' },
-      { id: 'rep-kr-2', timeAgo: '30m ago', type: 'intel', text: 'Satellite imagery captured increased rail movements across northern border.' },
+      { id: 'rep-kr-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-kr-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-kr-1', name: 'Troops', count: 900, type: 'infantry', code: 'SPECIAL-WARFARE' },
-      { id: 'u-kr-2', name: 'KF-21 Boramae', count: 24, type: 'aircraft', code: 'BORAMAE-TEST-WING' },
-      { id: 'u-kr-3', name: 'F-35A Freedom Knight', count: 40, type: 'aircraft', code: 'ROKAF-STEALTH' },
-      { id: 'u-kr-4', name: 'K2 Black Panther', count: 60, type: 'armor', code: 'CAPITAL-MECH-DIV' },
-      { id: 'u-kr-5', name: 'L-SAM & Cheongung-II', count: 16, type: 'air-defense', code: 'KAMD-BALLISTIC' },
-    ],
+      { id: 'u-kr-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-kr-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-kr-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-kr-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // North Korea (KP)
   {
-    id: 'base-kp-sunchon',
-    name: 'Sunchon Air Command Citadel',
-    codeName: 'SONGUN STEEL REDOUBT',
+    id: 'base-kp-capital',
+    name: 'Pyongyang Central Military Bastion',
+    codeName: 'CHONGLUNG IRON FORTRESS',
     countryName: 'North Korea',
     countryCode: 'KP',
     flagUrl: 'https://flagcdn.com/w80/kp.png',
-    lat: 39.412,
-    lng: 125.891,
-    dms: `39°24'43.2"N  125°53'27.6"E`,
-    status: 'Alert',
+    lat: 39.0392,
+    lng: 125.7625,
+    dms: `39°02'21.1"N 125°45'45.0"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-kp-1', timeAgo: '15m ago', type: 'defense', text: 'Underground bunker air defenses placed on combat maximum preparedness.' },
+      { id: 'rep-kp-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-kp-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-kp-1', name: 'Troops', count: 1500, type: 'infantry', code: 'KPA-SPECIAL-OP' },
-      { id: 'u-kp-2', name: 'MiG-29 Fulcrum', count: 35, type: 'aircraft', code: '55TH-REGIMENT' },
-      { id: 'u-kp-3', name: 'Pokpung-ho Tank', count: 80, type: 'armor', code: '105-ARMORED-DIV' },
-      { id: 'u-kp-4', name: 'KN-06 / Pyongae-5', count: 18, type: 'air-defense', code: 'STRATEGIC-SAM' },
-    ],
+      { id: 'u-kp-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-kp-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-kp-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-kp-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Pakistan (PK)
   {
-    id: 'base-pk-sargodha',
-    name: 'PAF Base Mushaf Sargodha',
-    codeName: 'INDUS EAGLE FORTRESS',
+    id: 'base-pk-capital',
+    name: 'Islamabad Joint Staff Citadel',
+    codeName: 'HIMALAYAN FALCON BASTION',
     countryName: 'Pakistan',
     countryCode: 'PK',
     flagUrl: 'https://flagcdn.com/w80/pk.png',
-    lat: 32.049,
-    lng: 72.671,
-    dms: `32°02'56.4"N  72°40'15.6"E`,
-    status: 'Alert',
+    lat: 33.6844,
+    lng: 73.0479,
+    dms: `33°41'03.8"N 73°02'52.4"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-pk-1', timeAgo: '14m ago', type: 'defense', text: 'JF-17 Block III combat air patrol conducting line-of-control verification.' },
+      { id: 'rep-pk-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-pk-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-pk-1', name: 'Troops', count: 720, type: 'infantry', code: 'SPECIAL-SERVICE-WING' },
-      { id: 'u-pk-2', name: 'J-10CE Vigorous Dragon', count: 25, type: 'aircraft', code: '15-SQ-COBRAS' },
-      { id: 'u-pk-3', name: 'JF-17 Thunder Block III', count: 48, type: 'aircraft', code: 'COMBAT-COMMANDERS' },
-      { id: 'u-pk-4', name: 'Al-Khalid I Tank', count: 55, type: 'armor', code: 'ARMORED-DIV' },
-      { id: 'u-pk-5', name: 'HQ-9P HIMADS', count: 10, type: 'air-defense', code: 'AIR-DEFENSE-CORPS' },
-    ],
+      { id: 'u-pk-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-pk-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-pk-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-pk-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Indonesia (ID)
   {
-    id: 'base-id-iswahjudi',
-    name: 'Lanud Iswahjudi Main Air Base',
-    codeName: 'NUSANTARA APEX REDOUBT',
+    id: 'base-id-capital',
+    name: 'Jakarta Strategic Command Bastion',
+    codeName: 'GARUDA ARCHIPELAGO SHIELD',
     countryName: 'Indonesia',
     countryCode: 'ID',
     flagUrl: 'https://flagcdn.com/w80/id.png',
-    lat: -7.615,
-    lng: 111.433,
-    dms: `7°36'54.0"S  111°25'58.8"E`,
-    status: 'Operational',
+    lat: -6.2088,
+    lng: 106.8456,
+    dms: `06°12'31.7"S 106°50'44.2"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-id-1', timeAgo: '23m ago', type: 'defense', text: 'Java Sea maritime flight corridor monitoring completed by F-16 squad.' },
+      { id: 'rep-id-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-id-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-id-1', name: 'Troops', count: 650, type: 'infantry', code: 'KORPASGAT' },
-      { id: 'u-id-2', name: 'Su-30MK2 Flanker', count: 16, type: 'aircraft', code: 'SKADRON-UDARA-11' },
-      { id: 'u-id-3', name: 'F-16C/D Fighting Falcon', count: 32, type: 'aircraft', code: 'SKADRON-UDARA-3' },
-      { id: 'u-id-4', name: 'Leopard 2RI', count: 40, type: 'armor', code: 'BATALYON-KAVALERI' },
-      { id: 'u-id-5', name: 'NASAMS 2 Indonesia', count: 8, type: 'air-defense', code: 'DETASEMEN-HANUD' },
-    ],
+      { id: 'u-id-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-id-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-id-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-id-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Vietnam (VN)
   {
-    id: 'base-vn-da-nang',
-    name: 'Da Nang Air Base Coastal Fortress',
-    codeName: 'ANNAMITE SHIELD BASTION',
+    id: 'base-vn-capital',
+    name: 'Hanoi Ba Dinh Defense Nexus',
+    codeName: 'RED RIVER DRAGON BASTION',
     countryName: 'Vietnam',
     countryCode: 'VN',
     flagUrl: 'https://flagcdn.com/w80/vn.png',
-    lat: 16.044,
-    lng: 108.199,
-    dms: `16°02'38.4"N  108°11'56.4"E`,
+    lat: 21.0285,
+    lng: 105.8542,
+    dms: `21°01'42.6"N 105°51'15.1"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-vn-1', timeAgo: '16m ago', type: 'defense', text: 'East Sea coastal radar arrays tracking foreign maritime formations.' },
+      { id: 'rep-vn-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-vn-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-vn-1', name: 'Troops', count: 700, type: 'infantry', code: 'DAC-CONG' },
-      { id: 'u-vn-2', name: 'Su-30MK2V Flanker', count: 36, type: 'aircraft', code: 'TRUNG-DOAN-923' },
-      { id: 'u-vn-3', name: 'T-90S Tank', count: 45, type: 'armor', code: 'LUK-LUONG-THIET-GIAP' },
-      { id: 'u-vn-4', name: 'S-300PMU-1 & Spyder', count: 12, type: 'air-defense', code: 'PHONG-KHONG' },
-    ],
+      { id: 'u-vn-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-vn-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-vn-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-vn-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Philippines (PH)
   {
-    id: 'base-ph-basa',
-    name: 'Basa Air Base Strategic Station',
-    codeName: 'LUZON SHIELD CITADEL',
+    id: 'base-ph-capital',
+    name: 'Manila Camp Aguinaldo Citadel',
+    codeName: 'PACIFIC PEARL REDOUBT',
     countryName: 'Philippines',
     countryCode: 'PH',
     flagUrl: 'https://flagcdn.com/w80/ph.png',
-    lat: 14.986,
-    lng: 120.491,
-    dms: `14°59'09.6"N  120°29'27.6"E`,
-    status: 'Operational',
+    lat: 14.5995,
+    lng: 120.9842,
+    dms: `14°35'58.2"N 120°59'03.1"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ph-1', timeAgo: '20m ago', type: 'defense', text: 'West Philippine Sea territorial air patrol missions ongoing.' },
+      { id: 'rep-ph-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ph-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ph-1', name: 'Troops', count: 480, type: 'infantry', code: 'SPECIAL-OP-WING' },
-      { id: 'u-ph-2', name: 'FA-50PH Golden Eagle', count: 12, type: 'aircraft', code: '5TH-FIGHTER-WING' },
-      { id: 'u-ph-3', name: 'Sabrah ASCOD Light Tank', count: 20, type: 'armor', code: 'ARMOR-DIVISION' },
-      { id: 'u-ph-4', name: 'SPYDER-ER Air Defense', count: 8, type: 'air-defense', code: 'AIR-DEFENSE-BAT' },
-    ],
+      { id: 'u-ph-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ph-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ph-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ph-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Thailand (TH)
   {
-    id: 'base-th-korat',
-    name: 'Korat Wing 1 Air Fortress',
-    codeName: 'SIAMESE TIGER CITADEL',
+    id: 'base-th-capital',
+    name: 'Bangkok Royal Defense Citadel',
+    codeName: 'SIAM EMERALD BASTION',
     countryName: 'Thailand',
     countryCode: 'TH',
     flagUrl: 'https://flagcdn.com/w80/th.png',
-    lat: 14.933,
-    lng: 102.079,
-    dms: `14°55'58.8"N  102°04'44.4"E`,
-    status: 'Operational',
+    lat: 13.7563,
+    lng: 100.5018,
+    dms: `13°45'22.7"N 100°30'06.5"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-th-1', timeAgo: '22m ago', type: 'defense', text: 'Joint multinational Cope Tiger air combat drills concluded.' },
+      { id: 'rep-th-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-th-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-th-1', name: 'Troops', count: 520, type: 'infantry', code: 'ROYAL-THAI-COMMANDO' },
-      { id: 'u-th-2', name: 'F-16A/B Block 15 OCU', count: 36, type: 'aircraft', code: 'WING-1-SQUADRON' },
-      { id: 'u-th-3', name: 'JAS 39C/D Gripen', count: 11, type: 'aircraft', code: 'WING-7-SQUADRON' },
-      { id: 'u-th-4', name: 'VT-4 Main Battle Tank', count: 40, type: 'armor', code: 'ROYAL-ARMOR' },
-      { id: 'u-th-5', name: 'KS-1C / FK-3 Missiles', count: 8, type: 'air-defense', code: 'AIR-DEFENSE-CMD' },
-    ],
+      { id: 'u-th-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-th-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-th-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-th-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Singapore (SG)
   {
-    id: 'base-sg-tengah',
-    name: 'Tengah Air Base Apex Citadel',
-    codeName: 'LION CITY DEFENSE SHIELD',
+    id: 'base-sg-capital',
+    name: 'Singapore MINDEF Integrated Redoubt',
+    codeName: 'MALACCA LION BASTION',
     countryName: 'Singapore',
     countryCode: 'SG',
     flagUrl: 'https://flagcdn.com/w80/sg.png',
-    lat: 1.388,
-    lng: 103.712,
-    dms: `1°23'16.8"N  103°42'43.2"E`,
+    lat: 1.3521,
+    lng: 103.8198,
+    dms: `01°21'07.6"N 103°49'11.3"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-sg-1', timeAgo: '11m ago', type: 'defense', text: 'Multi-layered automated air defense envelope operating at maximum readiness.' },
+      { id: 'rep-sg-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-sg-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-sg-1', name: 'Troops', count: 620, type: 'infantry', code: 'SAF-COMMANDOS' },
-      { id: 'u-sg-2', name: 'F-15SG Strike Eagle', count: 40, type: 'aircraft', code: '142-SQUADRON' },
-      { id: 'u-sg-3', name: 'F-16D Block 52+', count: 30, type: 'aircraft', code: '143-SQUADRON' },
-      { id: 'u-sg-4', name: 'Leopard 2SG', count: 50, type: 'armor', code: 'ARMOUR-FORMATION' },
-      { id: 'u-sg-5', name: 'Aster 30 SAMP/T & Spyder', count: 12, type: 'air-defense', code: 'AIR-DEFENSE-TASK' },
-    ],
+      { id: 'u-sg-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-sg-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-sg-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-sg-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Malaysia (MY)
   {
-    id: 'base-my-kuantan',
-    name: 'RMAF Kuantan Air Base',
-    codeName: 'MALACCA STRAIT SENTINEL',
+    id: 'base-my-capital',
+    name: 'Kuala Lumpur Wisma Pertahanan Bastion',
+    codeName: 'MALAYAN TIGER CITADEL',
     countryName: 'Malaysia',
     countryCode: 'MY',
     flagUrl: 'https://flagcdn.com/w80/my.png',
-    lat: 3.775,
-    lng: 103.209,
-    dms: `3°46'30.0"N  103°12'32.4"E`,
-    status: 'Operational',
+    lat: 3.139,
+    lng: 101.6869,
+    dms: `03°08'20.4"N 101°41'12.8"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-my-1', timeAgo: '18m ago', type: 'defense', text: 'South China Sea EEZ maritime surveillance missions completed.' },
+      { id: 'rep-my-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-my-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-my-1', name: 'Troops', count: 450, type: 'infantry', code: 'PASKAU-ELITE' },
-      { id: 'u-my-2', name: 'Su-30MKM Flanker', count: 18, type: 'aircraft', code: '11-SQUADRON' },
-      { id: 'u-my-3', name: 'F/A-18D Hornet', count: 8, type: 'aircraft', code: '18-SQUADRON' },
-      { id: 'u-my-4', name: 'PT-91M Pendekar', count: 35, type: 'armor', code: 'KOR-ARMOR-DIRAJA' },
-      { id: 'u-my-5', name: 'Starstreak & Jernas', count: 8, type: 'air-defense', code: 'REJIMEN-ARTILERI' },
-    ],
+      { id: 'u-my-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-my-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-my-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-my-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Taiwan (TW)
   {
-    id: 'base-tw-hsinchu',
-    name: 'Hsinchu 2nd Tactical Wing Base',
-    codeName: 'STRAIT SENTINEL REDOUBT',
+    id: 'base-tw-capital',
+    name: 'Taipei Dazhi Command Complex',
+    codeName: 'FORMOSA SENTINEL SHIELD',
     countryName: 'Taiwan',
     countryCode: 'TW',
     flagUrl: 'https://flagcdn.com/w80/tw.png',
-    lat: 24.818,
-    lng: 120.944,
-    dms: `24°49'04.8"N  120°56'38.4"E`,
-    status: 'Alert',
+    lat: 25.033,
+    lng: 121.5654,
+    dms: `25°01'58.8"N 121°33'55.4"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-tw-1', timeAgo: '7m ago', type: 'defense', text: 'Air Defense Identification Zone monitored continuous naval/air sorties.' },
+      { id: 'rep-tw-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-tw-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-tw-1', name: 'Troops', count: 850, type: 'infantry', code: 'AIRBORNE-BRIGADE' },
-      { id: 'u-tw-2', name: 'F-16V Viper', count: 45, type: 'aircraft', code: 'TACTICAL-WING' },
-      { id: 'u-tw-3', name: 'Mirage 2000-5Ei', count: 28, type: 'aircraft', code: '2ND-FIGHTER-WING' },
-      { id: 'u-tw-4', name: 'M1A2T Abrams', count: 40, type: 'armor', code: 'ARMORED-CORPS' },
-      { id: 'u-tw-5', name: 'Tien-Kung III & Patriot', count: 16, type: 'air-defense', code: 'MISSILE-COMMAND' },
-    ],
+      { id: 'u-tw-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-tw-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-tw-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-tw-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Australia 1 (Big Country #10 - Base A)
   {
-    id: 'base-au-tindal',
-    name: 'RAAF Base Tindal Northern Redoubt',
+    id: 'base-au-capital',
+    name: 'Canberra Joint Operations Command',
     codeName: 'SOUTHERN CROSS CITADEL',
     countryName: 'Australia',
     countryCode: 'AU',
     flagUrl: 'https://flagcdn.com/w80/au.png',
-    lat: -14.521,
-    lng: 132.378,
-    dms: `14°31'15.6"S  132°22'40.8"E`,
+    lat: -35.2809,
+    lng: 149.13,
+    dms: `35°16'51.2"S 149°07'48.0"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-au-1', timeAgo: '14m ago', type: 'defense', text: 'F-35A Lightning II stealth patrols operational across Timor Sea approach.' },
-      { id: 'rep-au-2', timeAgo: '1h ago', type: 'intel', text: 'Jindalee Operational Radar Network confirms all northern approaches clear.' },
+      { id: 'rep-au-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-au-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-au-1', name: 'Troops', count: 650, type: 'infantry', code: 'AIR-FORCE-SEC' },
-      { id: 'u-au-2', name: 'F-35A Lightning II', count: 36, type: 'aircraft', code: '75-SQUADRON' },
-      { id: 'u-au-3', name: 'F/A-18F Super Hornet', count: 24, type: 'aircraft', code: 'STRIKE-FIGHTER' },
-      { id: 'u-au-4', name: 'M1A2 SEPv3 Abrams', count: 35, type: 'armor', code: '1ST-ARMORED-REG' },
-      { id: 'u-au-5', name: 'NASAMS 3 Australia', count: 10, type: 'air-defense', code: '16TH-AIR-LAND' },
-    ],
+      { id: 'u-au-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-au-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-au-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-au-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Australia 2 (Big Country #10 - Base B)
   {
-    id: 'base-au-amberley',
-    name: 'RAAF Base Amberley East Command',
-    codeName: 'CORAL SEA APEX BASTION',
-    countryName: 'Australia',
-    countryCode: 'AU',
-    flagUrl: 'https://flagcdn.com/w80/au.png',
-    lat: -27.64,
-    lng: 152.711,
-    dms: `27°38'24.0"S  152°42'39.6"E`,
-    status: 'Operational',
-    reports: [
-      { id: 'rep-au2-1', timeAgo: '32m ago', type: 'logistics', text: 'KC-30A aerial refueling tanker readiness verified for trans-Pacific sorties.' },
-    ],
-    units: [
-      { id: 'u-au2-1', name: 'Troops', count: 520, type: 'infantry', code: 'COMBAT-SUPPORT' },
-      { id: 'u-au2-2', name: 'EA-18G Growler', count: 12, type: 'aircraft', code: '6-SQUADRON-EW' },
-      { id: 'u-au2-3', name: 'Boxer Combat Recon Vehicle', count: 38, type: 'armor', code: '2-14-LIGHT-HORSE' },
-      { id: 'u-au2-4', name: 'Short Range Air Defense (RBS-70)', count: 6, type: 'air-defense', code: 'FORCE-PROTECT' },
-    ],
-  },
-  // New Zealand (NZ)
-  {
-    id: 'base-nz-ohakea',
-    name: 'RNZAF Base Ohakea',
-    codeName: 'KIWI SOUTHERN SENTINEL',
+    id: 'base-nz-capital',
+    name: 'Wellington Trentham Defense Bastion',
+    codeName: 'PACIFIC SILVER FERN REDOUBT',
     countryName: 'New Zealand',
     countryCode: 'NZ',
     flagUrl: 'https://flagcdn.com/w80/nz.png',
-    lat: -40.206,
-    lng: 175.388,
-    dms: `40°12'21.6"S  175°23'16.8"E`,
-    status: 'Operational',
-    reports: [
-      { id: 'rep-nz-1', timeAgo: '28m ago', type: 'defense', text: 'P-8A Poseidon long-range maritime patrol flights operating south towards Antarctica.' },
-    ],
-    units: [
-      { id: 'u-nz-1', name: 'Troops', count: 320, type: 'infantry', code: 'NZ-INFANTRY-REG' },
-      { id: 'u-nz-2', name: 'P-8A Poseidon', count: 4, type: 'aircraft', code: '5-SQUADRON' },
-      { id: 'u-nz-3', name: 'NZLAV Light Armoured Vehicles', count: 28, type: 'armor', code: 'QUEEN-ALEXANDRA' },
-      { id: 'u-nz-4', name: 'Mistral VSHORAD', count: 6, type: 'air-defense', code: '16TH-FIELD-REG' },
-    ],
-  },
-
-  // ================= AFRICA =================
-  // Nigeria 1 (Big Country #11 - Base A)
-  {
-    id: 'base-abk-nigeria',
-    name: 'Sector-7 Strategic Outpost',
-    codeName: 'FORWARD OPERATING BASE OMEGA',
-    countryName: 'Nigeria',
-    countryCode: 'NG',
-    flagUrl: 'https://flagcdn.com/w80/ng.png',
-    lat: 8.792833,
-    lng: 7.394787,
-    dms: `8°47'34.2"N  7°23'41.2"E`,
-    status: 'Alert',
-    reports: [
-      { id: 'rep-1', timeAgo: '12m ago', type: 'urgent', text: 'We need air equipment and additional SAM interceptor batteries.' },
-      { id: 'rep-2', timeAgo: '45m ago', type: 'defense', text: 'We repelled 20 drone strike heading for sector headquarters.' },
-      { id: 'rep-3', timeAgo: '2h ago', type: 'logistics', text: 'Fuel pipeline supply secured along secondary highway perimeter.' },
-      { id: 'rep-4', timeAgo: '5h ago', type: 'intel', text: 'Satellite radar scans identified unknown airborne telemetry 80km north.' },
-    ],
-    units: [
-      { id: 'u-1', name: 'Troops', count: 200, type: 'infantry', code: 'INF-DIV-1' },
-      { id: 'u-2', name: 'F-22 Raptor', count: 45, type: 'aircraft', code: 'STEALTH-AIR' },
-      { id: 'u-3', name: 'F-117 Nighthawk', count: 6, type: 'aircraft', code: 'NIGHTHAWK' },
-      { id: 'u-4', name: 'F-15 Strike Eagle', count: 57, type: 'aircraft', code: 'AIR-SUPREMACY' },
-      { id: 'u-5', name: 'M1A2 Abrams', count: 32, type: 'armor', code: 'MAIN-BATTLE-TANK' },
-      { id: 'u-6', name: 'Patriot PAC-3', count: 12, type: 'air-defense', code: 'SURFACE-AIR' },
-    ],
-  },
-  // Nigeria 2 (Big Country #11 - Base B)
-  {
-    id: 'base-ng-bonny',
-    name: 'Atlantic Naval Citadel Bonny Island',
-    codeName: 'GULF OF GUINEA MARITIME SHIELD',
-    countryName: 'Nigeria',
-    countryCode: 'NG',
-    flagUrl: 'https://flagcdn.com/w80/ng.png',
-    lat: 4.453,
-    lng: 7.172,
-    dms: `4°27'10.8"N  7°10'19.2"E`,
+    lat: -41.2865,
+    lng: 174.7762,
+    dms: `41°17'11.4"S 174°46'34.3"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ng2-1', timeAgo: '24m ago', type: 'defense', text: 'Offshore oil terminal security perimeter verified with armed patrol boats.' },
+      { id: 'rep-nz-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-nz-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ng2-1', name: 'Troops', count: 450, type: 'infantry', code: 'SPECIAL-BOAT-SERVICE' },
-      { id: 'u-ng2-2', name: 'JF-17 Thunder', count: 15, type: 'aircraft', code: 'NAF-TACTICAL' },
-      { id: 'u-ng2-3', name: 'VT-4 Main Battle Tank', count: 28, type: 'armor', code: 'HEAVY-ARMOR-DIV' },
-      { id: 'u-ng2-4', name: 'Roland Surface-to-Air', count: 8, type: 'air-defense', code: 'COASTAL-AIR-SHIELD' },
-    ],
+      { id: 'u-nz-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-nz-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-nz-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-nz-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // South Africa (ZA)
   {
-    id: 'base-za-makhado',
-    name: 'Air Force Base Makhado',
-    codeName: 'AFRICAN SOUTHERN CHEETAH',
+    id: 'base-ng-capital',
+    name: 'Abuja National Defense Headquarters',
+    codeName: 'SECTOR-7 EAGLE BASTION',
+    countryName: 'Nigeria',
+    countryCode: 'NG',
+    flagUrl: 'https://flagcdn.com/w80/ng.png',
+    lat: 9.0765,
+    lng: 7.3986,
+    dms: `09°04'35.4"N 07°23'55.0"E`,
+    status: 'Fortified',
+    isCapital: true,
+    reports: [
+      { id: 'rep-ng-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ng-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
+    ],
+    units: [
+      { id: 'u-ng-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ng-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ng-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ng-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
+  },
+  {
+    id: 'base-za-capital',
+    name: 'Pretoria Thaba Tshwane Defense Bastion',
+    codeName: 'PROTEA SOUTHERN SHIELD',
     countryName: 'South Africa',
     countryCode: 'ZA',
     flagUrl: 'https://flagcdn.com/w80/za.png',
-    lat: -23.161,
-    lng: 29.697,
-    dms: `23°09'39.6"S  29°41'49.2"E`,
-    status: 'Operational',
+    lat: -25.7479,
+    lng: 28.2293,
+    dms: `25°44'52.4"S 28°13'45.5"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-za-1', timeAgo: '21m ago', type: 'defense', text: 'JAS 39 Gripen air defense alert exercises completed with full readiness.' },
+      { id: 'rep-za-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-za-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-za-1', name: 'Troops', count: 520, type: 'infantry', code: 'SPECIAL-FORCES-BRIGADE' },
-      { id: 'u-za-2', name: 'JAS 39C/D Gripen', count: 26, type: 'aircraft', code: '2-SQUADRON-CHETAHS' },
-      { id: 'u-za-3', name: 'Rooivalk Attack Heli', count: 11, type: 'aircraft', code: '16-SQUADRON' },
-      { id: 'u-za-4', name: 'Olifant Mk 2 Tank', count: 32, type: 'armor', code: 'SOUTH-AFRICAN-ARMOR' },
-      { id: 'u-za-5', name: 'Starstreak & Umkhonto', count: 8, type: 'air-defense', code: 'AIR-DEFENSE-ART' },
-    ],
+      { id: 'u-za-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-za-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-za-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-za-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Egypt (EG)
   {
-    id: 'base-eg-cairo-west',
-    name: 'Cairo West Air Base Strategic Hub',
-    codeName: 'PHARAONIC NILE CITADEL',
+    id: 'base-eg-capital',
+    name: 'Cairo Octagon Defense Nexus',
+    codeName: 'OCTAGON PHARAOH NEXUS',
     countryName: 'Egypt',
     countryCode: 'EG',
     flagUrl: 'https://flagcdn.com/w80/eg.png',
-    lat: 30.117,
-    lng: 30.916,
-    dms: `30°07'01.2"N  30°54'57.6"E`,
+    lat: 30.0444,
+    lng: 31.2357,
+    dms: `30°02'39.8"N 31°14'08.5"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-eg-1', timeAgo: '10m ago', type: 'defense', text: 'Suez Canal maritime corridor airspace heavily guarded with continuous Rafale patrols.' },
+      { id: 'rep-eg-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-eg-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-eg-1', name: 'Troops', count: 950, type: 'infantry', code: 'THUNDERBOLT-ELITE' },
-      { id: 'u-eg-2', name: 'Rafale DM/EM', count: 34, type: 'aircraft', code: 'TACTICAL-FIGHTERS' },
-      { id: 'u-eg-3', name: 'F-16C Block 52', count: 50, type: 'aircraft', code: 'EAF-AIR-WING' },
-      { id: 'u-eg-4', name: 'M1A1 Abrams', count: 80, type: 'armor', code: 'ARMORED-CORPS' },
-      { id: 'u-eg-5', name: 'S-300VM & Tor-M2E', count: 16, type: 'air-defense', code: 'AIR-DEFENSE-COMMAND' },
-    ],
+      { id: 'u-eg-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-eg-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-eg-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-eg-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Algeria 1 (Big Country #12 - Base A)
   {
-    id: 'base-sahara-algeria',
-    name: 'Fortress Citadel Sahara',
-    codeName: 'DEEP DESERT COMMAND NEXUS',
+    id: 'base-dz-capital',
+    name: 'Algiers Tagarins Defense Citadel',
+    codeName: 'MEDITERRANEAN ATLAS CITADEL',
     countryName: 'Algeria',
     countryCode: 'DZ',
     flagUrl: 'https://flagcdn.com/w80/dz.png',
-    lat: 27.422378,
-    lng: 2.752004,
-    dms: `27°25'20.6"N  2°45'7.2"E`,
+    lat: 36.7538,
+    lng: 3.0588,
+    dms: `36°45'13.7"N 03°03'31.7"E`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-101', timeAgo: '8m ago', type: 'defense', text: 'Anti-air perimeter radars detected low-altitude radar anomalies.' },
-      { id: 'rep-102', timeAgo: '30m ago', type: 'urgent', text: 'Thermal cooling towers operating at 94% threshold due to severe sandstorm.' },
-      { id: 'rep-103', timeAgo: '1h ago', type: 'defense', text: 'Interception array intercepted 6 hostile reconnaissance quadcopters.' },
-      { id: 'rep-104', timeAgo: '4h ago', type: 'intel', text: 'All ground patrol convoys checked in with zero perimeter breaches.' },
+      { id: 'rep-dz-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-dz-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-101', name: 'Troops', count: 350, type: 'infantry', code: 'DESERT-GUARD' },
-      { id: 'u-102', name: 'F-22 Raptor', count: 28, type: 'aircraft', code: 'STEALTH-AIR' },
-      { id: 'u-103', name: 'F-117 Nighthawk', count: 8, type: 'aircraft', code: 'NIGHTHAWK' },
-      { id: 'u-104', name: 'F-15 Strike Eagle', count: 42, type: 'aircraft', code: 'AIR-SUPREMACY' },
-      { id: 'u-105', name: 'Leopard 2A7', count: 40, type: 'armor', code: 'HEAVY-ARMOR' },
-      { id: 'u-106', name: 'Iron Dome Batteries', count: 8, type: 'air-defense', code: 'C-RAM-SHIELD' },
-    ],
+      { id: 'u-dz-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-dz-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-dz-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-dz-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Algeria 2 (Big Country #12 - Base B)
   {
-    id: 'base-dz-mers-el-kebir',
-    name: 'Mers El Kébir Mediterranean Bastion',
-    codeName: 'MAGHREB COASTAL FORTRESS',
-    countryName: 'Algeria',
-    countryCode: 'DZ',
-    flagUrl: 'https://flagcdn.com/w80/dz.png',
-    lat: 35.733,
-    lng: -0.708,
-    dms: `35°43'58.8"N  0°42'28.8"W`,
-    status: 'Operational',
-    reports: [
-      { id: 'rep-dz2-1', timeAgo: '17m ago', type: 'defense', text: 'Subterranean naval pens confirmed operational readiness for Kilo submarines.' },
-    ],
-    units: [
-      { id: 'u-dz2-1', name: 'Troops', count: 620, type: 'infantry', code: 'FUSILIERS-MARINS' },
-      { id: 'u-dz2-2', name: 'Su-30MKA Flanker', count: 32, type: 'aircraft', code: 'ESC-CHASSE' },
-      { id: 'u-dz2-3', name: 'T-90SA Tanks', count: 50, type: 'armor', code: 'BRIGADE-BLINDEE' },
-      { id: 'u-dz2-4', name: 'S-400 & Pantsir-S1', count: 12, type: 'air-defense', code: 'DEFENSE-AERIENNE' },
-    ],
-  },
-  // Morocco (MA)
-  {
-    id: 'base-ma-benguerir',
-    name: 'Ben Guerir Strategic Air Base',
+    id: 'base-ma-capital',
+    name: 'Rabat Royal Armed Forces Citadel',
     codeName: 'ATLAS LION CITADEL',
     countryName: 'Morocco',
     countryCode: 'MA',
     flagUrl: 'https://flagcdn.com/w80/ma.png',
-    lat: 32.213,
-    lng: -7.904,
-    dms: `32°12'46.8"N  7°54'14.4"W`,
+    lat: 34.0209,
+    lng: -6.8416,
+    dms: `34°01'15.2"N 06°50'29.8"W`,
     status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ma-1', timeAgo: '19m ago', type: 'defense', text: 'F-16 Block 52+ Viper combat patrols active along Atlantic corridor.' },
+      { id: 'rep-ma-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ma-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ma-1', name: 'Troops', count: 550, type: 'infantry', code: 'FORCES-SPECIALES' },
-      { id: 'u-ma-2', name: 'F-16C/D Block 52+', count: 24, type: 'aircraft', code: 'ESC-FALCON' },
-      { id: 'u-ma-3', name: 'Mirage F1 MF2000', count: 20, type: 'aircraft', code: 'ESC-ASTRONOMIE' },
-      { id: 'u-ma-4', name: 'M1A2S Abrams', count: 45, type: 'armor', code: 'REGIMENT-BLINDE' },
-      { id: 'u-ma-5', name: 'Barak MX & Patriot', count: 10, type: 'air-defense', code: 'DEFENSE-SOL-AIR' },
-    ],
+      { id: 'u-ma-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ma-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ma-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ma-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Kenya (KE)
   {
-    id: 'base-ke-laikipia',
-    name: 'Laikipia Air Base Nanyuki',
-    codeName: 'RIFT VALLEY SENTINEL',
+    id: 'base-ke-capital',
+    name: 'Nairobi Defense Forces Redoubt',
+    codeName: 'GREAT RIFT GUARDIAN',
     countryName: 'Kenya',
     countryCode: 'KE',
     flagUrl: 'https://flagcdn.com/w80/ke.png',
-    lat: 0.041,
-    lng: 37.029,
-    dms: `0°02'27.6"N  37°01'44.4"E`,
-    status: 'Operational',
+    lat: -1.2921,
+    lng: 36.8219,
+    dms: `01°17'31.6"S 36°49'18.8"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-ke-1', timeAgo: '25m ago', type: 'defense', text: 'Horn of Africa border reconnaissance flight patterns clear.' },
+      { id: 'rep-ke-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-ke-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-ke-1', name: 'Troops', count: 420, type: 'infantry', code: 'SPECIAL-BOAT-UNIT' },
-      { id: 'u-ke-2', name: 'F-5E Tiger II', count: 17, type: 'aircraft', code: 'TACTICAL-FIGHTER-WING' },
-      { id: 'u-ke-3', name: 'Vickers Mk 3 Tanks', count: 28, type: 'armor', code: 'KENYA-ARMOR-BRIGADE' },
-      { id: 'u-ke-4', name: 'Rapier & Mistral', count: 6, type: 'air-defense', code: 'AIR-DEFENSE-BAT' },
-    ],
+      { id: 'u-ke-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-ke-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-ke-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-ke-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Ethiopia (ET)
   {
-    id: 'base-et-bishoftu',
-    name: 'Harar Meda Air Base Bishoftu',
-    codeName: 'HIGHLANDS OF AXUM REDOUBT',
+    id: 'base-et-capital',
+    name: 'Addis Ababa Defense Citadel',
+    codeName: 'HORN OF AFRICA BASTION',
     countryName: 'Ethiopia',
     countryCode: 'ET',
     flagUrl: 'https://flagcdn.com/w80/et.png',
-    lat: 8.729,
-    lng: 38.997,
-    dms: `8°43'44.4"N  38°59'49.2"E`,
-    status: 'Operational',
+    lat: 9.032,
+    lng: 38.7469,
+    dms: `09°01'55.2"N 38°44'48.8"E`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-et-1', timeAgo: '20m ago', type: 'defense', text: 'Blue Nile dam defense zone air patrols active at continuous alert.' },
+      { id: 'rep-et-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-et-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-et-1', name: 'Troops', count: 680, type: 'infantry', code: 'SPECIAL-FORCES-CMD' },
-      { id: 'u-et-2', name: 'Su-30MK2 / Su-27', count: 22, type: 'aircraft', code: 'AIR-FORCE-REGIMENT' },
-      { id: 'u-et-3', name: 'T-72B Tanks', count: 48, type: 'armor', code: 'ARMORED-CORPS' },
-      { id: 'u-et-4', name: 'Pantsir-S1 & HQ-9', count: 10, type: 'air-defense', code: 'AIR-DEFENSE-DIV' },
-    ],
+      { id: 'u-et-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-et-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-et-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-et-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
-  // Ghana (GH)
   {
-    id: 'base-gh-tamale',
-    name: 'Tamale Air Force Base',
-    codeName: 'BLACK STAR STRATEGIC REDOUBT',
+    id: 'base-gh-capital',
+    name: 'Accra Burma Camp Defense Bastion',
+    codeName: 'GOLD COAST SENTINEL',
     countryName: 'Ghana',
     countryCode: 'GH',
     flagUrl: 'https://flagcdn.com/w80/gh.png',
-    lat: 9.426,
-    lng: -0.863,
-    dms: `9°25'33.6"N  0°51'46.8"W`,
-    status: 'Operational',
+    lat: 5.6037,
+    lng: -0.187,
+    dms: `05°36'13.3"N 00°11'13.2"W`,
+    status: 'Fortified',
+    isCapital: true,
     reports: [
-      { id: 'rep-gh-1', timeAgo: '30m ago', type: 'defense', text: 'Sahel southern border surveillance operations ongoing.' },
+      { id: 'rep-gh-1', timeAgo: '5m ago', type: 'defense', text: 'National capital defense early-warning array active at DEFCON-1.' },
+      { id: 'rep-gh-2', timeAgo: '28m ago', type: 'intel', text: 'Integrated aerospace and territorial defense perimeter confirmed secure.' }
     ],
     units: [
-      { id: 'u-gh-1', name: 'Troops', count: 340, type: 'infantry', code: 'SPECIAL-FORCES-AF' },
-      { id: 'u-gh-2', name: 'K-8 Karakorum', count: 6, type: 'aircraft', code: 'FIGHTER-SQUADRON' },
-      { id: 'u-gh-3', name: 'EE-9 Cascavel', count: 18, type: 'armor', code: 'RECON-REGIMENT' },
-      { id: 'u-gh-4', name: 'Igla-S Air Defense', count: 6, type: 'air-defense', code: 'SHORAD-UNIT' },
-    ],
+      { id: 'u-gh-1', name: 'Elite Guard Troops', count: 2500, type: 'infantry', code: 'CAPITAL-GARRISON' },
+      { id: 'u-gh-2', name: 'Air Superiority Fighters', count: 54, type: 'aircraft', code: 'INTERCEPT-WING' },
+      { id: 'u-gh-3', name: 'Main Battle Tanks', count: 68, type: 'armor', code: 'ARMORED-CORPS' },
+      { id: 'u-gh-4', name: 'Air Defense Battery', count: 14, type: 'air-defense', code: 'SHIELD-NET' }
+    ]
   },
 ];
+
+const STORAGE_KEY_CONSTRUCTED = 'base_warfare_constructed_bases';
+
+/**
+ * Retrieve sovereign bases constructed by the nation in other parts of their land.
+ */
+export function getConstructedBases(): MilitaryBase[] {
+  if (typeof window === 'undefined' || !window.localStorage) return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CONSTRUCTED);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save a newly commissioned base constructed in sovereign territory.
+ */
+export function saveConstructedBase(base: MilitaryBase): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  const current = getConstructedBases();
+  const filtered = current.filter((b) => b.id !== base.id);
+  filtered.push({ ...base, isConstructed: true });
+  localStorage.setItem(STORAGE_KEY_CONSTRUCTED, JSON.stringify(filtered));
+  MILITARY_BASES = getAllMilitaryBases();
+}
+
+/**
+ * Remove or decommission a constructed base.
+ */
+export function deleteConstructedBase(id: string): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  const current = getConstructedBases();
+  const filtered = current.filter((b) => b.id !== id);
+  localStorage.setItem(STORAGE_KEY_CONSTRUCTED, JSON.stringify(filtered));
+  MILITARY_BASES = getAllMilitaryBases();
+}
+
+/**
+ * Returns all active bases in the world: the 61 capital bases plus any constructed bases.
+ */
+export function getAllMilitaryBases(): MilitaryBase[] {
+  const constructed = getConstructedBases();
+  return [...CAPITAL_MILITARY_BASES, ...constructed];
+}
+
+export let MILITARY_BASES: MilitaryBase[] = getAllMilitaryBases();
