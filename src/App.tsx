@@ -19,9 +19,15 @@ import {
   Hammer,
   Cpu,
   Layers,
+  Flame,
+  Pause,
+  Play,
+  RotateCcw,
+  Navigation,
+  Radio,
 } from 'lucide-react';
 import { COUNTRIES, CountryFlag } from './countries';
-import { MILITARY_BASES, getAllMilitaryBases, MilitaryBase } from './militaryBases';
+import { MILITARY_BASES, getAllMilitaryBases, MilitaryBase, updateBaseGarrison } from './militaryBases';
 import BaseModal from './BaseModal';
 import UserInfoModal from './UserInfoModal';
 import SplashScreen from './SplashScreen';
@@ -33,6 +39,24 @@ import GameInitModal from './GameInitModal';
 import { INITIAL_NOTIFICATIONS, NotificationCategory, NotificationItem } from './notificationsData';
 import { AiCountryAgent, createInitialAiAgents, trainAiStep } from './aiLearningSystem';
 import { STRATEGIC_CITIES } from './citiesData';
+import {
+  ActiveMission,
+  MissionType,
+  MissionSquadUnit,
+  createMission,
+  getSavedMissions,
+  saveActiveMissions,
+  haltMission,
+  resumeMission,
+  abortMission,
+  interpolateCoordinates,
+  calculateBearingDegrees,
+} from './missionService';
+import {
+  createTacticalUnitMapIcon,
+  createStrikeImpactIcon,
+  createDeployedOutpostIcon,
+} from './unitMapIcons';
 
 
 // Formats coordinates to DMS and Decimal string
@@ -60,6 +84,10 @@ export default function App() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const pinMarkerRef = useRef<L.Marker | null>(null);
+  const missionsLayerGroupRef = useRef<L.LayerGroup | null>(null);
+
+  // Active missions moving across the world map with real-world km and speed
+  const [activeMissions, setActiveMissions] = useState<ActiveMission[]>(() => getSavedMissions());
 
   // Selected Base for full-page popup modal
   const [selectedBase, setSelectedBase] = useState<MilitaryBase | null>(null);
@@ -671,13 +699,323 @@ export default function App() {
       map.invalidateSize();
     }, 300);
 
+    // Layer group for tactical active missions (units, polylines, impacts)
+    const missionsLayer = L.layerGroup().addTo(map);
+    missionsLayerGroupRef.current = missionsLayer;
+
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(resizeTimeout);
       map.remove();
       mapInstanceRef.current = null;
+      missionsLayerGroupRef.current = null;
     };
   }, []);
+
+  // =========================================================================
+  // MISSION OPERATIONS HANDLERS: Launch, Halt, Resume, Abort
+  // =========================================================================
+  const handleLaunchMission = (missionData: {
+    type: MissionType;
+    baseId: string;
+    baseName: string;
+    countryCode: string;
+    units: MissionSquadUnit[];
+    primaryCategory: 'missile' | 'air' | 'armor' | 'infantry' | 'air-defense' | 'naval';
+    startLat: number;
+    startLng: number;
+    targetLat: number;
+    targetLng: number;
+    targetName?: string;
+  }) => {
+    const newMission = createMission(missionData);
+    setActiveMissions((prev) => {
+      const updated = [...prev, newMission];
+      saveActiveMissions(updated);
+      return updated;
+    });
+
+    const isStrike = missionData.type === 'strike';
+    setNotifications((n) => [
+      {
+        id: `launch-${Date.now()}`,
+        category: 'military',
+        title: isStrike ? 'STRIKE SORTIE LAUNCHED' : 'CONVOY DEPLOYED',
+        summary: `${missionData.units.reduce((s, u) => s + u.count, 0)} units deployed en-route to [${missionData.targetLat.toFixed(2)}, ${missionData.targetLng.toFixed(2)}].`,
+        detail: `Vector visual: ${isStrike ? 'RED ATTACK VECTOR' : 'WHITE TRANSIT LINE'}. Tracking real-world speed & distance telemetry.`,
+        timestamp: new Date().toISOString(),
+        timeAgo: 'Just now',
+        severity: isStrike ? 'critical' : 'info',
+        source: 'FLEET OPERATIONS',
+        isRead: false,
+      },
+      ...n,
+    ]);
+  };
+
+  const handleHaltMission = (missionId: string) => {
+    const updated = haltMission(missionId);
+    setActiveMissions(updated);
+    setNotifications((n) => [
+      {
+        id: `halt-${Date.now()}`,
+        category: 'military',
+        title: 'MISSION HALTED',
+        summary: 'Unit movement halted on map. Position frozen at current planetary coordinates.',
+        detail: 'En-route vector halted. Ready for resume or abort order.',
+        timestamp: new Date().toISOString(),
+        timeAgo: 'Just now',
+        severity: 'info',
+        source: 'FLEET DISPATCH',
+        isRead: false,
+      },
+      ...n,
+    ]);
+  };
+
+  const handleResumeMission = (missionId: string) => {
+    const updated = resumeMission(missionId);
+    setActiveMissions(updated);
+    setNotifications((n) => [
+      {
+        id: `resume-${Date.now()}`,
+        category: 'military',
+        title: 'MISSION RESUMED',
+        summary: 'Unit resumed flight / transit vector toward destination coordinates.',
+        detail: 'Cruising speed re-engaged.',
+        timestamp: new Date().toISOString(),
+        timeAgo: 'Just now',
+        severity: 'info',
+        source: 'FLEET DISPATCH',
+        isRead: false,
+      },
+      ...n,
+    ]);
+  };
+
+  const handleAbortMission = (missionId: string) => {
+    const missionToAbort = activeMissions.find((m) => m.id === missionId);
+    const updated = abortMission(missionId);
+    setActiveMissions(updated);
+
+    if (missionToAbort) {
+      const allBases = getAllMilitaryBases();
+      const homeBase = allBases.find((b) => b.id === missionToAbort.baseId);
+      if (homeBase) {
+        const restoredUnits = homeBase.units.map((u) => {
+          const sent = missionToAbort.units.find((mu) => mu.unitId === u.id);
+          return sent ? { ...u, count: u.count + sent.count } : u;
+        });
+        updateBaseGarrison(homeBase.id, restoredUnits);
+      }
+    }
+
+    setNotifications((n) => [
+      {
+        id: `abort-${Date.now()}`,
+        category: 'military',
+        title: 'MISSION ABORTED',
+        summary: 'Troops recalled. Forces returning to base garrison.',
+        detail: 'Transit aborted.',
+        timestamp: new Date().toISOString(),
+        timeAgo: 'Just now',
+        severity: 'info',
+        source: 'FLEET DISPATCH',
+        isRead: false,
+      },
+      ...n,
+    ]);
+  };
+
+  // Live gradual unit movement update loop (real-world speed & km calculations)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveMissions((prev) => {
+        if (!prev || prev.length === 0) return prev;
+
+        const now = Date.now();
+        let changed = false;
+
+        const next = prev.map((m) => {
+          if (m.status !== 'active') return m;
+
+          changed = true;
+          const currentElapsed = (now - m.startTime) + m.elapsedMs;
+          const progress = Math.min(1.0, currentElapsed / m.durationMs);
+
+          const nextCoord = interpolateCoordinates(
+            m.startLat,
+            m.startLng,
+            m.targetLat,
+            m.targetLng,
+            progress
+          );
+          const headingDeg = calculateBearingDegrees(
+            m.currentLat,
+            m.currentLng,
+            m.targetLat,
+            m.targetLng
+          );
+
+          if (progress >= 1.0) {
+            // Completed
+            const isStrike = m.type === 'strike';
+            if (isStrike) {
+              setNotifications((n) => [
+                {
+                  id: `impact-${Date.now()}`,
+                  category: 'military',
+                  title: 'DETONATION CONFIRMED',
+                  summary: `Kinetic strike impact confirmed at target coordinates [${m.targetLat.toFixed(2)}, ${m.targetLng.toFixed(2)}].`,
+                  detail: `Payload delivered against target ${m.targetName || 'sector'}.`,
+                  timestamp: new Date().toISOString(),
+                  timeAgo: 'Just now',
+                  severity: 'critical',
+                  source: 'STRIKE COMMAND',
+                  isRead: false,
+                },
+                ...n,
+              ]);
+            } else {
+              setNotifications((n) => [
+                {
+                  id: `deployed-${Date.now()}`,
+                  category: 'military',
+                  title: 'EXPEDITIONARY GARRISON DEPLOYED',
+                  summary: `Convoy established defensive outpost at planetary coordinates [${m.targetLat.toFixed(2)}, ${m.targetLng.toFixed(2)}].`,
+                  detail: `${m.units.reduce((s, u) => s + u.count, 0)} units deployed successfully to ${m.targetName || 'sector'}.`,
+                  timestamp: new Date().toISOString(),
+                  timeAgo: 'Just now',
+                  severity: 'info',
+                  source: 'EXPEDITIONARY COMMAND',
+                  isRead: false,
+                },
+                ...n,
+              ]);
+            }
+
+            return {
+              ...m,
+              progress: 1.0,
+              currentLat: m.targetLat,
+              currentLng: m.targetLng,
+              status: 'completed' as const,
+            };
+          }
+
+          return {
+            ...m,
+            progress,
+            currentLat: nextCoord.lat,
+            currentLng: nextCoord.lng,
+            headingDeg,
+          };
+        });
+
+        if (changed) {
+          saveActiveMissions(next);
+        }
+        return next;
+      });
+    }, 80);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Render active missions on Leaflet map:
+  // - Trajectory paths: White line for Deploy, Red line for Strike
+  // - Moving unit markers: satellite/side-tilted view, illuminating fire rocket line for missiles, speed km/h
+  // - Impacts: detonation explosion or deployed outpost
+  useEffect(() => {
+    const layer = missionsLayerGroupRef.current;
+    if (!layer || !mapInstanceRef.current) return;
+
+    layer.clearLayers();
+
+    activeMissions.forEach((m) => {
+      const isStrike = m.type === 'strike';
+      const isCompleted = m.status === 'completed';
+
+      // 1. Trajectory lines
+      // "if moving to a location it is a white will if attacking it is a red line leading to destination"
+      const coreColor = isStrike ? '#ef4444' : '#ffffff';
+      const glowColor = isStrike ? '#dc2626' : '#ffffff';
+
+      // Outer glow polyline
+      L.polyline(
+        [
+          [m.startLat, m.startLng],
+          [m.targetLat, m.targetLng],
+        ],
+        {
+          color: glowColor,
+          weight: isStrike ? 7 : 6,
+          opacity: 0.25,
+        }
+      ).addTo(layer);
+
+      // Core trajectory polyline
+      L.polyline(
+        [
+          [m.startLat, m.startLng],
+          [m.targetLat, m.targetLng],
+        ],
+        {
+          color: coreColor,
+          weight: 3.5,
+          opacity: 0.95,
+          dashArray: isStrike ? '8, 6' : '6, 8',
+        }
+      ).addTo(layer);
+
+      // 2. Target coordinates marker
+      if (isCompleted) {
+        if (isStrike) {
+          L.marker([m.targetLat, m.targetLng], {
+            icon: createStrikeImpactIcon(),
+            zIndexOffset: 1200,
+          }).addTo(layer);
+        } else {
+          L.marker([m.targetLat, m.targetLng], {
+            icon: createDeployedOutpostIcon(m.units[0]?.name || 'Garrison'),
+            zIndexOffset: 800,
+          }).addTo(layer);
+        }
+      } else {
+        // Target crosshair pin
+        const targetHtml = `
+          <div class="relative w-8 h-8 flex items-center justify-center pointer-events-none">
+            <div class="w-4 h-4 rounded-full border-2 ${isStrike ? 'border-red-500' : 'border-white'} animate-ping [animation-duration:1.5s]"></div>
+            <div class="w-2 h-2 rounded-full ${isStrike ? 'bg-red-500' : 'bg-white'}"></div>
+          </div>
+        `;
+        L.marker([m.targetLat, m.targetLng], {
+          icon: L.divIcon({
+            html: targetHtml,
+            className: 'target-pin-icon',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+          }),
+          zIndexOffset: 700,
+        }).addTo(layer);
+
+        // 3. Moving military unit marker (gradual live real-world movement)
+        const unitIcon = createTacticalUnitMapIcon(m);
+        const unitMarker = L.marker([m.currentLat, m.currentLng], {
+          icon: unitIcon,
+          zIndexOffset: 1100,
+        }).addTo(layer);
+
+        unitMarker.on('click', () => {
+          if (m.status === 'active') {
+            handleHaltMission(m.id);
+          } else if (m.status === 'halted') {
+            handleResumeMission(m.id);
+          }
+        });
+      }
+    });
+  }, [activeMissions]);
 
   // Formatter for UTC time and date
   const hours = String(currentUtc.getUTCHours()).padStart(2, '0');
@@ -1065,6 +1403,7 @@ export default function App() {
               mapInstanceRef.current.flyTo([lat, lng], zoom || 8, { duration: 1.5 });
             }
           }}
+          onOpenBase={(b) => setSelectedBase(b)}
           onClose={() => setIsMilitaryOpen(false)}
         />
       )}
@@ -1094,12 +1433,152 @@ export default function App() {
         />
       )}
 
-      {/* FULL PAGE BASE MODAL: Emerges when a military base on map is clicked */}
+      {/* FLOATING ACTIVE OPERATIONS / SORTIE HUD: Allows live halt/resume and telemetry monitoring on map */}
+      {activeMissions.some((m) => m.status !== 'completed') && (
+        <aside
+          id="floating-operations-hud"
+          className="fixed top-24 left-2.5 sm:left-4 z-40 w-72 sm:w-80 bg-zinc-950/90 backdrop-blur-md border border-zinc-700/90 rounded-xl p-3 shadow-2xl space-y-2.5 animate-in fade-in"
+        >
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <div className="flex items-center gap-2">
+              <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-200">
+                Active Map Sorties ({activeMissions.filter((m) => m.status !== 'completed').length})
+              </span>
+            </div>
+            <span className="text-[9px] font-mono text-zinc-400">REAL-WORLD KM</span>
+          </div>
+
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            {activeMissions
+              .filter((m) => m.status !== 'completed')
+              .map((m) => {
+                const isStrike = m.type === 'strike';
+                const isHalted = m.status === 'halted';
+                const remainingKm = Math.round(m.totalDistanceKm * (1 - m.progress));
+
+                return (
+                  <div
+                    key={m.id}
+                    className={`p-2.5 rounded-lg border text-xs font-mono space-y-1.5 transition-all ${
+                      isHalted
+                        ? 'bg-amber-950/30 border-amber-500/50'
+                        : isStrike
+                        ? 'bg-red-950/30 border-red-500/50'
+                        : 'bg-zinc-900/90 border-zinc-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span
+                        className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
+                          isStrike ? 'bg-red-600 text-white' : 'bg-zinc-200 text-zinc-950'
+                        }`}
+                      >
+                        {isStrike ? 'STRIKE' : 'DEPLOY'}
+                      </span>
+                      <span className="text-[10px] text-zinc-300 font-bold truncate max-w-[130px]">
+                        {m.targetName || 'Target Sector'}
+                      </span>
+                      <span
+                        className={`text-[9px] font-bold uppercase ${
+                          isHalted ? 'text-amber-400 animate-pulse' : 'text-emerald-400'
+                        }`}
+                      >
+                        {isHalted ? 'HALTED' : `${m.cruisingSpeedKmH} km/h`}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-zinc-400">
+                      <span>Rem: <strong className="text-emerald-400">{remainingKm.toLocaleString()} km</strong></span>
+                      <span>Pos: [{m.currentLat.toFixed(1)}, {m.currentLng.toFixed(1)}]</span>
+                    </div>
+
+                    {/* Progress track */}
+                    <div className="w-full bg-zinc-800 rounded-full h-1 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          isHalted ? 'bg-amber-400' : isStrike ? 'bg-red-500' : 'bg-white'
+                        }`}
+                        style={{ width: `${Math.round(m.progress * 100)}%` }}
+                      />
+                    </div>
+
+                    {/* Quick Halt / Resume / Recall buttons */}
+                    <div className="flex items-center justify-end gap-1.5 pt-1">
+                      {isHalted ? (
+                        <button
+                          onClick={() => handleResumeMission(m.id)}
+                          className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                        >
+                          <Play className="w-2.5 h-2.5" />
+                          <span>Resume</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleHaltMission(m.id)}
+                          className="px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-zinc-950 text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                        >
+                          <Pause className="w-2.5 h-2.5" />
+                          <span>Halt Unit</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleAbortMission(m.id)}
+                        className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] flex items-center gap-1 cursor-pointer"
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" />
+                        <span>Recall</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </aside>
+      )}
+
+      {/* FULL PAGE BASE MODAL: Emerges when a military base on map or command list is clicked */}
       {selectedBase && (
         <BaseModal
           base={selectedBase}
+          allBases={getAllMilitaryBases()}
+          userCountry={selectedCountry}
+          pinnedCoord={pinnedCoord}
+          activeMissions={activeMissions}
+          onLaunchMission={handleLaunchMission}
+          onHaltMission={handleHaltMission}
+          onResumeMission={handleResumeMission}
+          onAbortMission={handleAbortMission}
+          onTargetForeignBase={(foreignBase) => {
+            const playerBase = getAllMilitaryBases().find(
+              (b) => b.countryCode.toUpperCase() === selectedCountry.code.toUpperCase()
+            );
+            if (playerBase) {
+              setSelectedBase(playerBase);
+            }
+          }}
           onClose={() => setSelectedBase(null)}
           onShowComingSoon={showComingSoon}
+          onBaseUpdated={(updated) => setSelectedBase(updated)}
+          onAddNotification={(title, msg) => {
+            setNotifications((n) => [
+              {
+                id: `base-notif-${Date.now()}`,
+                category: 'military',
+                title,
+                summary: msg,
+                detail: msg,
+                timestamp: new Date().toISOString(),
+                timeAgo: 'Just now',
+                severity: 'info',
+                source: 'BASE COMMAND',
+                isRead: false,
+              },
+              ...n,
+            ]);
+          }}
+          onRewardMoney={(amt) => setMoney((m) => m + amt)}
         />
       )}
 

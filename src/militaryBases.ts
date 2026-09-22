@@ -2,8 +2,67 @@ export interface MilitaryUnit {
   id: string;
   name: string;
   count: number;
-  type: 'infantry' | 'aircraft' | 'armor' | 'air-defense';
+  type: 'infantry' | 'aircraft' | 'armor' | 'air-defense' | 'missile' | 'naval';
   code: string;
+}
+
+export type MilitaryCategory = 'all' | 'air' | 'missile' | 'armor' | 'air-defense' | 'infantry';
+
+export function getUnitCategory(unit: MilitaryUnit): 'air' | 'missile' | 'armor' | 'air-defense' | 'infantry' {
+  const n = unit.name.toLowerCase();
+  const t = unit.type;
+  if (
+    t === 'missile' ||
+    n.includes('missile') ||
+    n.includes('rocket') ||
+    n.includes('tomahawk') ||
+    n.includes('kalibr') ||
+    n.includes('atacms') ||
+    n.includes('iskander') ||
+    n.includes('salvo')
+  ) {
+    return 'missile';
+  }
+  if (
+    t === 'aircraft' ||
+    n.includes('fighter') ||
+    n.includes('air') ||
+    n.includes('jet') ||
+    n.includes('bomber') ||
+    n.includes('plane') ||
+    n.includes('drone') ||
+    n.includes('f-35') ||
+    n.includes('su-57') ||
+    n.includes('helicopter')
+  ) {
+    return 'air';
+  }
+  if (
+    t === 'air-defense' ||
+    n.includes('defense') ||
+    n.includes('sam') ||
+    n.includes('patriot') ||
+    n.includes('s-400') ||
+    n.includes('radar') ||
+    n.includes('ciws') ||
+    n.includes('shield') ||
+    n.includes('launcher')
+  ) {
+    return 'air-defense';
+  }
+  if (
+    t === 'armor' ||
+    n.includes('tank') ||
+    n.includes('armor') ||
+    n.includes('ifv') ||
+    n.includes('apc') ||
+    n.includes('abrams') ||
+    n.includes('leopard') ||
+    n.includes('t-90')
+  ) {
+    return 'armor';
+  }
+  return 'infantry';
 }
 
 export interface BaseReport {
@@ -1570,6 +1629,51 @@ export function deployUnitsToBase(
 }
 
 /**
+ * Updates base garrison units and adds optional report to persistence.
+ */
+export function updateBaseGarrison(
+  baseId: string,
+  updatedUnits: MilitaryUnit[],
+  newReport?: BaseReport
+): MilitaryBase[] {
+  if (typeof window === 'undefined' || !window.localStorage) return getAllMilitaryBases();
+
+  const overrides = getBaseGarrisonOverrides();
+  const allCurrent = getAllMilitaryBases();
+  const targetBase = allCurrent.find((b) => b.id === baseId);
+  if (!targetBase) return allCurrent;
+
+  const currentReports: BaseReport[] = overrides[baseId]?.reports
+    ? [...overrides[baseId].reports]
+    : [...targetBase.reports];
+
+  if (newReport) {
+    currentReports.unshift(newReport);
+  }
+
+  overrides[baseId] = {
+    units: updatedUnits,
+    reports: currentReports.slice(0, 30),
+  };
+
+  localStorage.setItem(STORAGE_KEY_BASE_GARRISON_OVERRIDES, JSON.stringify(overrides));
+
+  const constructed = getConstructedBases();
+  const cIndex = constructed.findIndex((b) => b.id === baseId);
+  if (cIndex >= 0) {
+    constructed[cIndex] = {
+      ...constructed[cIndex],
+      units: updatedUnits,
+      reports: currentReports.slice(0, 30),
+    };
+    localStorage.setItem(STORAGE_KEY_CONSTRUCTED, JSON.stringify(constructed));
+  }
+
+  MILITARY_BASES = getAllMilitaryBases();
+  return MILITARY_BASES;
+}
+
+/**
  * Returns all active bases in the world: the 61 capital bases plus any constructed bases.
  */
 export function getAllMilitaryBases(): MilitaryBase[] {
@@ -1578,14 +1682,32 @@ export function getAllMilitaryBases(): MilitaryBase[] {
   const bases = [...CAPITAL_MILITARY_BASES, ...constructed];
 
   return bases.map((base) => {
-    if (overrides[base.id]) {
-      return {
-        ...base,
-        units: overrides[base.id].units,
-        reports: overrides[base.id].reports || base.reports,
-      };
+    let units = overrides[base.id]?.units || base.units;
+    // Ensure the base has at least one missile unit for the missile category
+    const hasMissile = units.some(
+      (u) =>
+        u.type === 'missile' ||
+        u.name.toLowerCase().includes('missile') ||
+        u.name.toLowerCase().includes('rocket')
+    );
+    if (!hasMissile) {
+      units = [
+        ...units,
+        {
+          id: `${base.id}-cruise-missiles`,
+          name: 'Tactical Cruise Missiles',
+          count: 36,
+          type: 'missile',
+          code: 'CRUISE-SALVO',
+        },
+      ];
     }
-    return base;
+
+    return {
+      ...base,
+      units,
+      reports: overrides[base.id]?.reports || base.reports,
+    };
   });
 }
 

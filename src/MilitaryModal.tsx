@@ -49,6 +49,7 @@ interface MilitaryModalProps {
   onAddNotification: (title: string, message: string) => void;
   onClose: () => void;
   onFlyToBase: (lat: number, lng: number, zoom?: number) => void;
+  onOpenBase?: (base: MilitaryBase) => void;
 }
 
 export const MilitaryModal: React.FC<MilitaryModalProps> = ({
@@ -61,6 +62,7 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
   onAddNotification,
   onClose,
   onFlyToBase,
+  onOpenBase,
 }) => {
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<MilitaryTab>('base');
@@ -70,9 +72,6 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
   const [baseFilter, setBaseFilter] = useState<'all' | 'sovereign' | 'occupied'>('all');
 
   // Seize new base expedition modal
-  const [isSeizeModalOpen, setIsSeizeModalOpen] = useState(false);
-  const [targetSearch, setTargetSearch] = useState('');
-
   // Fortified bases state
   const [fortifiedBases, setFortifiedBases] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem('base_warfare_fortified_bases');
@@ -97,54 +96,26 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
   );
 
   // BASE RESTRICTION REQUIREMENT:
-  // "All countries must have 1 base in their capital only but can build more in other parts of their land"
-  // "you only see the base that belongs to your country or occupied\seized territory"
+  // Player should not have control of any other country assets (base, military, anything).
+  // Only displays military installations belonging to the player's country (capital + constructed bases).
   const viewableBases = allBases.filter((b) => {
-    const isSovereign =
+    return (
       b.countryCode.toUpperCase() === userCountry.code.toUpperCase() ||
-      b.countryName.toLowerCase() === userCountry.name.toLowerCase();
-    const isOccupied =
-      occupiedBaseIds.includes(b.id) ||
-      occupiedCountryCodes.has(b.countryCode.toUpperCase());
-    return isSovereign || isOccupied;
+      b.countryName.toLowerCase() === userCountry.name.toLowerCase()
+    );
   });
 
-  // Search & tab filter on viewable bases
+  // Search filter on sovereign bases
   const filteredBases = viewableBases.filter((b) => {
     const matchesSearch =
       b.name.toLowerCase().includes(baseSearch.toLowerCase()) ||
       b.codeName.toLowerCase().includes(baseSearch.toLowerCase()) ||
       b.countryName.toLowerCase().includes(baseSearch.toLowerCase());
-    if (!matchesSearch) return false;
-
-    const isSovereign =
-      b.countryCode.toUpperCase() === userCountry.code.toUpperCase() ||
-      b.countryName.toLowerCase() === userCountry.name.toLowerCase();
-    const isOccupied =
-      occupiedBaseIds.includes(b.id) ||
-      occupiedCountryCodes.has(b.countryCode.toUpperCase());
-
-    if (baseFilter === 'sovereign') return isSovereign;
-    if (baseFilter === 'occupied') return isOccupied;
-    return true;
+    return matchesSearch;
   });
 
-  // Foreign bases available to conquer/seize (for the Expedition Annex dialog)
-  const conquerableBases = allBases.filter((b) => {
-    const isSovereign =
-      b.countryCode.toUpperCase() === userCountry.code.toUpperCase() ||
-      b.countryName.toLowerCase() === userCountry.name.toLowerCase();
-    const isOccupied =
-      occupiedBaseIds.includes(b.id) ||
-      occupiedCountryCodes.has(b.countryCode.toUpperCase());
-    return !isSovereign && !isOccupied;
-  }).filter(
-    (b) =>
-      b.name.toLowerCase().includes(targetSearch.toLowerCase()) ||
-      b.countryName.toLowerCase().includes(targetSearch.toLowerCase())
-  );
-
   // Construct Base in Domestic Territory Action
+
   const handleConstructBase = () => {
     const cost = 25000000;
     if (money < cost) {
@@ -252,17 +223,9 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
     );
   };
 
-  // Seize / Occupy Base Action
-  const handleSeizeBase = (base: MilitaryBase) => {
-    if (onToggleOccupyBase) {
-      onToggleOccupyBase(base.id);
-    }
-    setIsSeizeModalOpen(false);
-  };
-
   // Navigation items: Bases + Army (Air, Ground, Missile) + Navy + Equipment + Electronic + Launchers + Warfare
   const NAV_ITEMS: { id: MilitaryTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'base', label: 'Bases (Homeland & Seized)', icon: Shield },
+    { id: 'base', label: 'Bases (Homeland Defense)', icon: Shield },
     { id: 'army', label: 'Army', icon: Swords },
     { id: 'navy', label: 'Navy', icon: Ship },
     { id: 'equipment', label: 'Equipment', icon: Package },
@@ -345,55 +308,14 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
                 </div>
               </div>
 
-              {/* Filter Pills & Conquer Expedition Button */}
+              {/* Action: Build Domestic Regional Base */}
               <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
-                <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800">
-                  <button
-                    onClick={() => setBaseFilter('all')}
-                    className={`px-2.5 py-1 rounded transition-all cursor-pointer ${
-                      baseFilter === 'all'
-                        ? 'bg-zinc-800 text-white font-bold'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    All ({viewableBases.length})
-                  </button>
-                  <button
-                    onClick={() => setBaseFilter('sovereign')}
-                    className={`px-2.5 py-1 rounded transition-all cursor-pointer ${
-                      baseFilter === 'sovereign'
-                        ? 'bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/50'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Homeland ({viewableBases.filter((b) => b.countryCode.toUpperCase() === userCountry.code.toUpperCase()).length})
-                  </button>
-                  <button
-                    onClick={() => setBaseFilter('occupied')}
-                    className={`px-2.5 py-1 rounded transition-all cursor-pointer ${
-                      baseFilter === 'occupied'
-                        ? 'bg-red-950 text-red-300 font-bold border border-red-500/50'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    Seized ({viewableBases.filter((b) => b.countryCode.toUpperCase() !== userCountry.code.toUpperCase()).length})
-                  </button>
-                </div>
-
                 <button
                   onClick={() => setIsConstructModalOpen(true)}
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow"
                 >
                   <Hammer className="w-3.5 h-3.5" />
-                  <span>+ Build Domestic Base</span>
-                </button>
-
-                <button
-                  onClick={() => setIsSeizeModalOpen(true)}
-                  className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow"
-                >
-                  <Swords className="w-3.5 h-3.5" />
-                  <span>Annex / Seize Base</span>
+                  <span>+ Build Homeland Base</span>
                 </button>
               </div>
             </div>
@@ -506,22 +428,37 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
 
                       {/* Actions */}
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 mt-auto">
-                        <button
-                          onClick={() => {
-                            onFlyToBase(base.lat, base.lng, 8);
-                            onClose();
-                          }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono rounded cursor-pointer transition-colors"
-                        >
-                          <ArrowUpRight className="w-3.5 h-3.5" />
-                          <span>View on Map</span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          {onOpenBase && (
+                            <button
+                              onClick={() => {
+                                onOpenBase(base);
+                                onClose();
+                              }}
+                              className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs font-mono rounded cursor-pointer transition-colors shadow-sm"
+                              title="Enter Base Command (Battle, Update, Control, Military)"
+                            >
+                              <Swords className="w-3.5 h-3.5" />
+                              <span>Command</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              onFlyToBase(base.lat, base.lng, 8);
+                              onClose();
+                            }}
+                            className="flex items-center gap-1 px-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono rounded cursor-pointer transition-colors"
+                          >
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                            <span>Map</span>
+                          </button>
+                        </div>
 
                         <div className="flex items-center gap-1.5">
                           {!isSovereign && onToggleOccupyBase && (
                             <button
                               onClick={() => onToggleOccupyBase(base.id)}
-                              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-red-950 text-zinc-300 hover:text-red-300 border border-zinc-700 text-xs font-mono rounded cursor-pointer"
+                              className="px-2 py-1.5 bg-zinc-800 hover:bg-red-950 text-zinc-300 hover:text-red-300 border border-zinc-700 text-xs font-mono rounded cursor-pointer"
                               title="Relinquish base occupation"
                             >
                               Withdraw
@@ -612,76 +549,6 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
         {/* TAB: WARFARE (Air combat simulator applying the 10-field pipeline to Airtable units) */}
         {activeTab === 'warfare' && <BattleSimulatorView />}
       </main>
-
-      {/* Annex / Seize Foreign Base Dialog */}
-      {isSeizeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 max-w-xl w-full space-y-4 shadow-2xl font-mono">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Swords className="w-5 h-5 text-red-500" />
-                <h3 className="font-bold text-sm text-white uppercase">Annex / Seize Foreign Base</h3>
-              </div>
-              <button
-                onClick={() => setIsSeizeModalOpen(false)}
-                className="text-zinc-500 hover:text-white cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-zinc-400 font-sans">
-              Select an installation to dispatch expeditionary forces. Once occupied, the base and its regional garrison will enter your national command list.
-            </p>
-
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-              <input
-                type="text"
-                value={targetSearch}
-                onChange={(e) => setTargetSearch(e.target.value)}
-                placeholder="Search target fortress or country..."
-                className="w-full pl-9 pr-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-white outline-none focus:border-red-500"
-              />
-            </div>
-
-            <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
-              {conquerableBases.slice(0, 15).map((base) => (
-                <div
-                  key={base.id}
-                  className="p-2.5 bg-zinc-950 rounded-lg border border-zinc-800 flex items-center justify-between gap-3 hover:border-zinc-700"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <img src={base.flagUrl} alt="" className="w-5 h-3.5 rounded object-cover" />
-                    <div className="min-w-0">
-                      <div className="text-xs font-bold text-zinc-200 truncate">{base.name}</div>
-                      <div className="text-[10px] text-zinc-500 truncate">
-                        {base.countryName} • {base.codeName}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleSeizeBase(base)}
-                    className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded text-xs font-bold shrink-0 cursor-pointer"
-                  >
-                    Seize Base
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-2 border-t border-zinc-800">
-              <button
-                onClick={() => setIsSeizeModalOpen(false)}
-                className="px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Construct Domestic Base Dialog */}
       {isConstructModalOpen && (
