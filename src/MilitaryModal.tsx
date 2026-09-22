@@ -31,14 +31,12 @@ import { STRATEGIC_CITIES } from './citiesData';
 
 export type MilitaryTab =
   | 'base'
-  | 'warfare'
-  | 'air_force'
+  | 'army'
   | 'navy'
-  | 'ground'
-  | 'missiles'
   | 'equipment'
   | 'electronic'
-  | 'launchers';
+  | 'launchers'
+  | 'warfare';
 
 interface MilitaryModalProps {
   userCountry: CountryFlag;
@@ -262,17 +260,15 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
     setIsSeizeModalOpen(false);
   };
 
-  // Navigation items: Strictly Base + Warfare (Rules & Sim) + 7 Airtable Tables
+  // Navigation items: Bases + Army (Air, Ground, Missile) + Navy + Equipment + Electronic + Launchers + Warfare
   const NAV_ITEMS: { id: MilitaryTab; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'base', label: 'Bases (Homeland & Seized)', icon: Shield },
-    { id: 'warfare', label: 'Warfare (Rules & Sim)', icon: Crosshair },
-    { id: 'air_force', label: 'Air Force', icon: Plane },
+    { id: 'army', label: 'Army', icon: Swords },
     { id: 'navy', label: 'Navy', icon: Ship },
-    { id: 'ground', label: 'Ground', icon: Crosshair },
-    { id: 'missiles', label: 'Missiles', icon: Rocket },
     { id: 'equipment', label: 'Equipment', icon: Package },
     { id: 'electronic', label: 'Electronic Systems', icon: Radio },
     { id: 'launchers', label: 'Launchers', icon: Flame },
+    { id: 'warfare', label: 'Warfare (Rules & Sim)', icon: Crosshair },
   ];
 
   return (
@@ -553,72 +549,68 @@ export const MilitaryModal: React.FC<MilitaryModalProps> = ({
           </div>
         )}
 
-        {/* TAB 2: WARFARE (Air combat simulator applying the 10-field pipeline to Airtable units) */}
-        {activeTab === 'warfare' && <BattleSimulatorView />}
-
-        {/* TABS 3 - 9: STRICTLY THE 7 AIRTABLE TABLES */}
-        {activeTab === 'air_force' && (
+        {/* TAB: ARMY (Consolidated Military Weapons: Air, Ground, Missile) */}
+        {activeTab === 'army' && (
           <AirtableArsenalView
-            initialTableKey="AIR_FORCE"
+            initialTableKey="ARMY"
             money={money}
+            userBases={viewableBases}
             onDeductMoney={onDeductMoney}
             onAddNotification={onAddNotification}
+            onBasesUpdated={(updated) => setAllBases(updated)}
           />
         )}
 
+        {/* TAB: NAVY */}
         {activeTab === 'navy' && (
           <AirtableArsenalView
             initialTableKey="NAVY"
             money={money}
+            userBases={viewableBases}
             onDeductMoney={onDeductMoney}
             onAddNotification={onAddNotification}
+            onBasesUpdated={(updated) => setAllBases(updated)}
           />
         )}
 
-        {activeTab === 'ground' && (
-          <AirtableArsenalView
-            initialTableKey="GROUND"
-            money={money}
-            onDeductMoney={onDeductMoney}
-            onAddNotification={onAddNotification}
-          />
-        )}
-
-        {activeTab === 'missiles' && (
-          <AirtableArsenalView
-            initialTableKey="MISSILES"
-            money={money}
-            onDeductMoney={onDeductMoney}
-            onAddNotification={onAddNotification}
-          />
-        )}
-
+        {/* TAB: EQUIPMENT */}
         {activeTab === 'equipment' && (
           <AirtableArsenalView
             initialTableKey="EQUIPMENT"
             money={money}
+            userBases={viewableBases}
             onDeductMoney={onDeductMoney}
             onAddNotification={onAddNotification}
+            onBasesUpdated={(updated) => setAllBases(updated)}
           />
         )}
 
+        {/* TAB: ELECTRONIC SYSTEMS */}
         {activeTab === 'electronic' && (
           <AirtableArsenalView
             initialTableKey="ELECTRONIC_SYSTEMS"
             money={money}
+            userBases={viewableBases}
             onDeductMoney={onDeductMoney}
             onAddNotification={onAddNotification}
+            onBasesUpdated={(updated) => setAllBases(updated)}
           />
         )}
 
+        {/* TAB: LAUNCHERS */}
         {activeTab === 'launchers' && (
           <AirtableArsenalView
             initialTableKey="LAUNCHERS"
             money={money}
+            userBases={viewableBases}
             onDeductMoney={onDeductMoney}
             onAddNotification={onAddNotification}
+            onBasesUpdated={(updated) => setAllBases(updated)}
           />
         )}
+
+        {/* TAB: WARFARE (Air combat simulator applying the 10-field pipeline to Airtable units) */}
+        {activeTab === 'warfare' && <BattleSimulatorView />}
       </main>
 
       {/* Annex / Seize Foreign Base Dialog */}

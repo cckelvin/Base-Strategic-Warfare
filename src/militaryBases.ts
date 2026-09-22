@@ -1479,12 +1479,114 @@ export function deleteConstructedBase(id: string): void {
   MILITARY_BASES = getAllMilitaryBases();
 }
 
+const STORAGE_KEY_BASE_GARRISON_OVERRIDES = 'base_warfare_garrison_overrides';
+
+/**
+ * Retrieve custom garrison reinforcements deployed to bases.
+ */
+export function getBaseGarrisonOverrides(): Record<string, { units: MilitaryUnit[]; reports?: BaseReport[] }> {
+  if (typeof window === 'undefined' || !window.localStorage) return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_BASE_GARRISON_OVERRIDES);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Deploy newly purchased military weapons/units directly into a selected base's garrison.
+ */
+export function deployUnitsToBase(
+  baseId: string,
+  unitName: string,
+  count: number,
+  category: 'infantry' | 'aircraft' | 'armor' | 'air-defense',
+  unitCode?: string
+): MilitaryBase[] {
+  if (typeof window === 'undefined' || !window.localStorage) return getAllMilitaryBases();
+
+  const overrides = getBaseGarrisonOverrides();
+  const allCurrent = getAllMilitaryBases();
+  const targetBase = allCurrent.find((b) => b.id === baseId);
+  if (!targetBase) return allCurrent;
+
+  const currentUnits: MilitaryUnit[] = overrides[baseId]?.units
+    ? [...overrides[baseId].units]
+    : [...targetBase.units];
+
+  const code = unitCode || `${unitName.replace(/[^A-Za-z0-9]/g, '').substring(0, 8).toUpperCase()}-CORPS`;
+  const existingIndex = currentUnits.findIndex(
+    (u) => u.name.toLowerCase() === unitName.toLowerCase() || (unitCode && u.code === unitCode)
+  );
+
+  if (existingIndex >= 0) {
+    currentUnits[existingIndex] = {
+      ...currentUnits[existingIndex],
+      count: currentUnits[existingIndex].count + count,
+    };
+  } else {
+    currentUnits.push({
+      id: `unit-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      name: unitName,
+      count: count,
+      type: category,
+      code,
+    });
+  }
+
+  const currentReports: BaseReport[] = overrides[baseId]?.reports
+    ? [...overrides[baseId].reports]
+    : [...targetBase.reports];
+
+  currentReports.unshift({
+    id: `rep-${Date.now()}`,
+    timeAgo: 'Just now',
+    type: 'logistics',
+    text: `Reinforcements deployed: +${count}x ${unitName} stationed to defense perimeter.`,
+  });
+
+  overrides[baseId] = {
+    units: currentUnits,
+    reports: currentReports.slice(0, 10),
+  };
+
+  localStorage.setItem(STORAGE_KEY_BASE_GARRISON_OVERRIDES, JSON.stringify(overrides));
+
+  // If it's a constructed base, sync to constructed bases as well
+  const constructed = getConstructedBases();
+  const cIndex = constructed.findIndex((b) => b.id === baseId);
+  if (cIndex >= 0) {
+    constructed[cIndex] = {
+      ...constructed[cIndex],
+      units: currentUnits,
+      reports: currentReports.slice(0, 10),
+    };
+    localStorage.setItem(STORAGE_KEY_CONSTRUCTED, JSON.stringify(constructed));
+  }
+
+  MILITARY_BASES = getAllMilitaryBases();
+  return MILITARY_BASES;
+}
+
 /**
  * Returns all active bases in the world: the 61 capital bases plus any constructed bases.
  */
 export function getAllMilitaryBases(): MilitaryBase[] {
   const constructed = getConstructedBases();
-  return [...CAPITAL_MILITARY_BASES, ...constructed];
+  const overrides = getBaseGarrisonOverrides();
+  const bases = [...CAPITAL_MILITARY_BASES, ...constructed];
+
+  return bases.map((base) => {
+    if (overrides[base.id]) {
+      return {
+        ...base,
+        units: overrides[base.id].units,
+        reports: overrides[base.id].reports || base.reports,
+      };
+    }
+    return base;
+  });
 }
 
 export let MILITARY_BASES: MilitaryBase[] = getAllMilitaryBases();
