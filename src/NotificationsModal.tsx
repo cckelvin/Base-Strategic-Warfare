@@ -145,20 +145,20 @@ export default function NotificationsModal({
       {/* Categories Navigation Bar (Divided by General, Nation, Military, Alliance, External) */}
       <nav
         id="notification-categories-nav"
-        className="flex items-center justify-between px-3 py-1.5 sm:px-6 sm:py-2 bg-zinc-900/50 border-b border-zinc-800 overflow-x-auto gap-1.5 sm:gap-2 shrink-0 scrollbar-none"
+        className="flex flex-col sm:flex-row sm:items-center justify-between px-2 sm:px-6 py-1.5 sm:py-2 bg-zinc-900/50 border-b border-zinc-800 gap-1.5 sm:gap-2 shrink-0 overflow-x-auto"
       >
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-0.5">
           {/* ALL */}
           <button
             onClick={() => setActiveCategory('all')}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center gap-1 px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-md sm:rounded-xl text-[9px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'all'
                 ? 'bg-zinc-100 text-zinc-950 shadow-md'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
             }`}
           >
             <span>ALL</span>
-            <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-300">
+            <span className="text-[8px] sm:text-[10px] px-1 py-0.2 rounded-full bg-zinc-800 text-zinc-300">
               {notifications.length}
             </span>
           </button>
@@ -167,15 +167,15 @@ export default function NotificationsModal({
           <button
             id="tab-notif-general"
             onClick={() => setActiveCategory('general')}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center gap-1 px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-md sm:rounded-xl text-[9px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'general'
                 ? 'bg-amber-500 text-zinc-950 shadow-md'
                 : 'text-amber-400/80 hover:text-amber-300 hover:bg-amber-950/40'
             }`}
           >
-            <Globe className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <Globe className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
             <span>GENERAL</span>
-            <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-amber-300">
+            <span className="text-[8px] sm:text-[10px] px-1 py-0.2 rounded-full bg-zinc-800/80 text-amber-300">
               {notifications.filter((n) => n.category === 'general').length}
             </span>
           </button>
@@ -184,15 +184,15 @@ export default function NotificationsModal({
           <button
             id="tab-notif-nation"
             onClick={() => setActiveCategory('nation')}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center gap-1 px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-md sm:rounded-xl text-[9px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'nation'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-blue-400/80 hover:text-blue-300 hover:bg-blue-950/40'
             }`}
           >
-            <Flag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <Flag className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
             <span>NATION</span>
-            <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-blue-300">
+            <span className="text-[8px] sm:text-[10px] px-1 py-0.2 rounded-full bg-zinc-800/80 text-blue-300">
               {notifications.filter((n) => n.category === 'nation').length}
             </span>
           </button>
@@ -201,15 +201,15 @@ export default function NotificationsModal({
           <button
             id="tab-notif-military"
             onClick={() => setActiveCategory('military')}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center gap-1 px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-md sm:rounded-xl text-[9px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'military'
                 ? 'bg-red-600 text-white shadow-md'
                 : 'text-red-400/80 hover:text-red-300 hover:bg-red-950/40'
             }`}
           >
-            <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <Shield className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
             <span>MILITARY</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-red-300">
+            <span className="text-[8px] sm:text-[10px] px-1 py-0.2 rounded-full bg-zinc-800/80 text-red-300">
               {notifications.filter((n) => n.category === 'military').length}
             </span>
           </button>
@@ -218,15 +218,15 @@ export default function NotificationsModal({
           <button
             id="tab-notif-alliance"
             onClick={() => setActiveCategory('alliance')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1 px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-md sm:rounded-xl text-[9px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'alliance'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-950/40'
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
             <span>ALLIANCE</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-emerald-300">
+            <span className="text-[8px] sm:text-[10px] px-1 py-0.2 rounded-full bg-zinc-800/80 text-emerald-300">
               {notifications.filter((n) => n.category === 'alliance').length}
             </span>
           </button>
@@ -235,22 +235,22 @@ export default function NotificationsModal({
           <button
             id="tab-notif-external"
             onClick={() => setActiveCategory('external')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1 px-1.5 py-0.5 sm:px-3 sm:py-1.5 rounded-md sm:rounded-xl text-[9px] sm:text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
               activeCategory === 'external'
                 ? 'bg-purple-600 text-white shadow-md'
                 : 'text-purple-400/80 hover:text-purple-300 hover:bg-purple-950/40'
             }`}
           >
-            <AlertOctagon className="w-3.5 h-3.5" />
+            <AlertOctagon className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
             <span>EXTERNAL</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800/80 text-purple-300">
+            <span className="text-[8px] sm:text-[10px] px-1 py-0.2 rounded-full bg-zinc-800/80 text-purple-300">
               {notifications.filter((n) => n.category === 'external').length}
             </span>
           </button>
         </div>
 
         {/* Search Field */}
-        <div className="relative min-w-[200px]">
+        <div className="relative w-full sm:w-48 shrink-0">
           <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"

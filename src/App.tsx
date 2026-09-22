@@ -16,6 +16,9 @@ import {
   Copy,
   Building2,
   Bell,
+  Hammer,
+  Cpu,
+  Layers,
 } from 'lucide-react';
 import { COUNTRIES, CountryFlag } from './countries';
 import { MILITARY_BASES, MilitaryBase } from './militaryBases';
@@ -24,7 +27,12 @@ import UserInfoModal from './UserInfoModal';
 import SplashScreen from './SplashScreen';
 import NotificationsModal from './NotificationsModal';
 import CitiesModal from './CitiesModal';
+import ConstructModal from './ConstructModal';
+import { MilitaryModal } from './MilitaryModal';
+import GameInitModal from './GameInitModal';
 import { INITIAL_NOTIFICATIONS, NotificationCategory, NotificationItem } from './notificationsData';
+import { AiCountryAgent, createInitialAiAgents, trainAiStep } from './aiLearningSystem';
+import { STRATEGIC_CITIES } from './citiesData';
 
 
 // Formats coordinates to DMS and Decimal string
@@ -93,6 +101,180 @@ export default function App() {
 
   // Strategic Cities modal state
   const [isCitiesModalOpen, setIsCitiesModalOpen] = useState(false);
+
+  // User ID and World ID game setup state
+  const [userId, setUserId] = useState<string>(() => {
+    return localStorage.getItem('base_warfare_user_id') || 'CMD-OVERLORD-01';
+  });
+  const [worldId, setWorldId] = useState<string>(() => {
+    return localStorage.getItem('base_warfare_world_id') || 'WORLD-2026-PRIME';
+  });
+  const [isGameInitialized, setIsGameInitialized] = useState<boolean>(() => {
+    return !!localStorage.getItem('base_warfare_initialized');
+  });
+  const [isGameInitModalOpen, setIsGameInitModalOpen] = useState<boolean>(false);
+
+  // Full-page Construct (Build) modal state
+  const [isConstructOpen, setIsConstructOpen] = useState<boolean>(false);
+
+  // Full-page Military command modal state
+  const [isMilitaryOpen, setIsMilitaryOpen] = useState<boolean>(false);
+
+  // Occupied city IDs state (for cities section restriction)
+  const [occupiedCityIds, setOccupiedCityIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('base_warfare_occupied_cities');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {}
+    }
+    return ['city-cairo'];
+  });
+
+  const handleToggleOccupyCity = (cityId: string) => {
+    setOccupiedCityIds((prev) => {
+      const isAlreadyOccupied = prev.includes(cityId);
+      const updated = isAlreadyOccupied ? prev.filter((id) => id !== cityId) : [...prev, cityId];
+      localStorage.setItem('base_warfare_occupied_cities', JSON.stringify(updated));
+
+      const targetCity = STRATEGIC_CITIES.find((c) => c.id === cityId);
+      const cityName = targetCity ? targetCity.name : cityId;
+
+      if (isAlreadyOccupied) {
+        setNotifications((n) => [
+          {
+            id: `withdraw-${Date.now()}`,
+            category: 'military',
+            title: 'Garrison Withdrawn',
+            summary: `Forces evacuated ${cityName}.`,
+            detail: `Strategic forces evacuated ${cityName}. Metropolitan district reverted to sovereign status.`,
+            timestamp: new Date().toISOString(),
+            timeAgo: 'Just now',
+            severity: 'info',
+            source: 'JOINT COMMAND',
+            isRead: false,
+          },
+          ...n,
+        ]);
+      } else {
+        setNotifications((n) => [
+          {
+            id: `occupy-${Date.now()}`,
+            category: 'military',
+            title: 'Metropolis Annexed & Occupied',
+            summary: `Expedition forces seized control of ${cityName}.`,
+            detail: `Expedition forces seized control of ${cityName}! Civil administration secured; municipal GDP diverted to national war chest.`,
+            timestamp: new Date().toISOString(),
+            timeAgo: 'Just now',
+            severity: 'critical',
+            source: 'EXPEDITION COMMAND',
+            isRead: false,
+          },
+          ...n,
+        ]);
+      }
+
+      return updated;
+    });
+  };
+
+  // Internal Learning AI System State (Controls all foreign nations)
+  const [aiAgents, setAiAgents] = useState<Record<string, AiCountryAgent>>(() => {
+    return createInitialAiAgents(selectedCountry.code);
+  });
+  const [lastAiTrainingLog, setLastAiTrainingLog] = useState<string | null>(null);
+
+  // AI Training Loop: Foreign nations adapt economy and warfare from training experiences
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAiAgents((prevAgents) => {
+        const { updatedAgents, trainingLog } = trainAiStep(prevAgents, selectedCountry.code);
+        if (trainingLog) {
+          setLastAiTrainingLog(trainingLog.message);
+          // Occasionally trigger an Intelligence alert in the news feed
+          if (Math.random() < 0.25) {
+            setNotifications((n) => [
+              {
+                id: `ai-train-${Date.now()}`,
+                category: 'external',
+                title: `${trainingLog.country} AI Neural Adaptation`,
+                summary: trainingLog.message,
+                detail: `${trainingLog.country} neural military engine adapted parameters based on live simulation experience. Target nation has strengthened strategic posture.`,
+                timestamp: new Date().toISOString(),
+                timeAgo: 'Just now',
+                severity: 'alert',
+                source: 'AI MATRIX SURVEILLANCE',
+                isRead: false,
+              },
+              ...n,
+            ]);
+          }
+        }
+        return updatedAgents;
+      });
+    }, 6500);
+
+    return () => clearInterval(interval);
+  }, [selectedCountry.code]);
+
+  const handleInitializeGame = (country: CountryFlag, newUserId: string, newWorldId: string) => {
+    setSelectedCountry(country);
+    setUserId(newUserId);
+    setWorldId(newWorldId);
+    setIsGameInitialized(true);
+    setIsGameInitModalOpen(false);
+
+    localStorage.setItem('base_warfare_initialized', 'true');
+    localStorage.setItem('base_warfare_user_id', newUserId);
+    localStorage.setItem('base_warfare_world_id', newWorldId);
+    localStorage.setItem('base_warfare_selected_country', JSON.stringify(country));
+
+    // Re-initialize foreign AI learning models based on player country
+    const agents = createInitialAiAgents(country.code);
+    setAiAgents(agents);
+
+    setNotifications((prev) => [
+      {
+        id: `init-${Date.now()}`,
+        category: 'nation',
+        title: 'Theater Boot Initialized',
+        summary: `Commander ${newUserId} deployed in command of ${country.name}.`,
+        detail: `Commander ${newUserId} deployed in command of ${country.name} across ${newWorldId}. Internal Neural AI matrix synchronized for ${Object.keys(agents).length} foreign nation states.`,
+        timestamp: new Date().toISOString(),
+        timeAgo: 'Just now',
+        severity: 'info',
+        source: 'STRATEGIC HEADQUARTERS',
+        isRead: false,
+      },
+      ...prev,
+    ]);
+  };
+
+  const handleDeductMoney = (amount: number) => {
+    setMoney((prev) => {
+      const next = Math.max(0, prev - amount);
+      localStorage.setItem('base_warfare_treasury', String(next));
+      return next;
+    });
+  };
+
+  const handleAddNotification = (title: string, message: string) => {
+    setNotifications((prev) => [
+      {
+        id: `notif-${Date.now()}`,
+        category: 'nation',
+        title,
+        summary: message,
+        detail: message,
+        timestamp: new Date().toISOString(),
+        timeAgo: 'Just now',
+        severity: 'success',
+        source: 'MINISTRY OF WORKS',
+        isRead: false,
+      },
+      ...prev,
+    ]);
+  };
 
   // Fly map camera to a city coordinate
   const handleFlyToCity = (lat: number, lng: number, _name: string) => {
@@ -661,36 +843,32 @@ export default function App() {
         </div>
       )}
 
-      {/* RIGHT EDGE CONTROLS: Tiny compass icon button above military */}
+      {/* TOP RIGHT: Commander Call-sign & World ID chip with AI Learning Matrix indicator */}
       <div
-        id="right-edge-controls"
-        className="fixed right-2.5 bottom-16 sm:right-4 sm:bottom-24 z-50 flex flex-col items-center gap-2"
+        id="commander-world-chip"
+        className="fixed top-2 right-2 sm:top-3.5 sm:right-3.5 z-40 hidden md:flex items-center gap-2.5 px-3 py-1.5 bg-zinc-950/90 backdrop-blur-md border border-zinc-700/80 rounded-lg shadow-xl"
       >
-        {/* Tiny compass icon button */}
         <button
-          id="compass-pinpoint-btn"
-          onClick={() => setIsPinpointActive(!isPinpointActive)}
-          title={
-            isPinpointActive
-              ? 'Compass active: Click any area on map to pinpoint coordinate'
-              : 'Activate Compass: Pinpoints universal planetary coordinate on map'
-          }
-          aria-label="Universal Planetary Compass"
-          className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border shadow-xl backdrop-blur-md transition-all duration-200 cursor-pointer ${
-            isPinpointActive
-              ? 'bg-amber-500 text-zinc-950 border-amber-300 ring-2 ring-amber-400/50 scale-110'
-              : 'bg-zinc-950/85 hover:bg-zinc-900 text-amber-400 border-zinc-700/80 hover:border-amber-400/70 hover:scale-105'
-          }`}
+          onClick={() => setIsGameInitModalOpen(true)}
+          title="Click to Switch World or Reconfigure Commander"
+          className="flex items-center gap-2 text-left cursor-pointer group"
         >
-          <Compass
-            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 ${
-              isPinpointActive ? 'rotate-45' : ''
-            }`}
-          />
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="font-mono text-[10px]">
+            <span className="text-amber-400 font-bold group-hover:text-amber-300 block">{userId}</span>
+            <span className="text-zinc-500 font-bold block">{worldId}</span>
+          </div>
         </button>
+
+        <div className="h-4 w-px bg-zinc-800" />
+
+        <div className="flex items-center gap-1.5 text-[10px] font-mono text-cyan-400">
+          <Cpu className="w-3 h-3 text-cyan-400 animate-pulse" />
+          <span>AI MATRIX ACTIVE ({Object.keys(aiAgents).length} NATIONS)</span>
+        </div>
       </div>
 
-      {/* BOTTOM LEFT: Cities Button */}
+      {/* BOTTOM LEFT: Cities Button (Restricted: only player nation or occupied cities viewable) */}
       <div
         id="bottom-left-cities-container"
         className="fixed bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 z-40"
@@ -698,7 +876,7 @@ export default function App() {
         <button
           id="cities-bottom-left-btn"
           onClick={() => setIsCitiesModalOpen(true)}
-          title="Strategic World Megacity Hubs"
+          title={`Strategic Megacities (${selectedCountry.name} & Occupied Territories)`}
           aria-label="Strategic Megacities"
           className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-cyan-950/95 hover:bg-cyan-900 border border-cyan-500/80 hover:border-cyan-400 text-cyan-200 hover:text-white shadow-2xl backdrop-blur-xl transition-all duration-200 cursor-pointer active:scale-95 group font-mono shrink-0"
         >
@@ -706,27 +884,28 @@ export default function App() {
             <Building2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </div>
           <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">CITIES</span>
-          <span className="px-1 py-0.2 sm:px-1.5 sm:py-0.2 rounded-full bg-cyan-800/80 text-[9px] sm:text-[10px] text-cyan-300 border border-cyan-600/50">
-            12
+          <span className="px-1.5 py-0.2 sm:px-2 sm:py-0.2 rounded-full bg-cyan-800/80 text-[9px] sm:text-[10px] text-cyan-300 border border-cyan-600/50 font-bold">
+            {STRATEGIC_CITIES.filter((c) => c.countryCode === selectedCountry.code || occupiedCityIds.includes(c.id)).length}
           </span>
         </button>
       </div>
 
-      {/* BOTTOM RIGHT CORNER: Military Button (responsive sizing for smaller screens) */}
-      <div id="bottom-right-military-container" className="fixed right-2.5 bottom-2.5 sm:right-4 sm:bottom-4 z-50">
+      {/* BOTTOM RIGHT CORNER: Military Button + Hammer Icon Button (Build) with Pinpoint above it */}
+      <div
+        id="bottom-right-cluster-container"
+        className="fixed right-2.5 bottom-2.5 sm:right-4 sm:bottom-4 z-50 flex items-end gap-2.5 sm:gap-3"
+      >
+        {/* Military Button (stenciled military crimson) */}
         <button
           id="military-btn"
           type="button"
-          onClick={() => showComingSoon('Global Military Command')}
+          onClick={() => setIsMilitaryOpen(true)}
           aria-label="Military Command"
           title="Military Command"
-          className="relative flex items-center justify-center px-5 py-2.5 sm:px-10 sm:py-4 md:px-12 md:py-4.5 min-w-[105px] sm:min-w-[170px] md:min-w-[210px] rounded-full camo-crimson-bg border-2 border-red-400/90 shadow-[0_10px_35px_-3px_rgba(220,38,38,0.7),0_0_25px_rgba(239,68,68,0.45)] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer overflow-hidden group tracking-wider"
+          className="relative flex items-center justify-center px-4 py-2 sm:px-8 sm:py-3.5 md:px-10 md:py-4 min-w-[95px] sm:min-w-[155px] md:min-w-[195px] h-10 sm:h-12 md:h-13 rounded-full camo-crimson-bg border-2 border-red-400/90 shadow-[0_10px_35px_-3px_rgba(220,38,38,0.7),0_0_25px_rgba(239,68,68,0.45)] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer overflow-hidden group tracking-wider shrink-0"
         >
-          {/* Subtle camo tactical bright gloss overlay */}
           <div className="absolute inset-0 rounded-full bg-black/15 group-hover:bg-black/5 transition-colors" />
           <div className="absolute inset-1 rounded-full border border-red-200/40" />
-
-          {/* Stenciled Bold White Military Text */}
           <span
             id="military-btn-text"
             className="relative text-xs sm:text-sm md:text-base font-black tracking-widest text-white uppercase font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
@@ -734,9 +913,53 @@ export default function App() {
             MILITARY
           </span>
         </button>
+
+        {/* Pinpoint Button & Hammer Button Column:
+            - Pinpoint button is directly above the Hammer button
+            - Hammer button is placed after the military button
+            - Hammer button is an exact circle (rounded-full aspect-square)
+            - Hammer button is taller than the military button height (military is h-10/12/13, hammer is w-13 h-13 / w-16 h-16 / w-18 h-18)
+        */}
+        <div id="pinpoint-hammer-stack" className="flex flex-col items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Universal Compass Pinpoint button directly above hammer */}
+          <button
+            id="compass-pinpoint-btn"
+            onClick={() => setIsPinpointActive(!isPinpointActive)}
+            title={
+              isPinpointActive
+                ? 'Compass active: Click any area on map to pinpoint coordinate'
+                : 'Activate Compass: Pinpoints universal planetary coordinate on map'
+            }
+            aria-label="Universal Planetary Compass"
+            className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border shadow-xl backdrop-blur-md transition-all duration-200 cursor-pointer ${
+              isPinpointActive
+                ? 'bg-amber-500 text-zinc-950 border-amber-300 ring-2 ring-amber-400/50 scale-110'
+                : 'bg-zinc-950/85 hover:bg-zinc-900 text-amber-400 border-zinc-700/80 hover:border-amber-400/70 hover:scale-105'
+            }`}
+          >
+            <Compass
+              className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 ${
+                isPinpointActive ? 'rotate-45' : ''
+              }`}
+            />
+          </button>
+
+          {/* Hammer Icon Button (Build) */}
+          <button
+            id="construct-hammer-btn"
+            type="button"
+            onClick={() => setIsConstructOpen(true)}
+            aria-label="Construct (Build)"
+            title="Construct (Build): Heavy Infrastructure, Megaprojects & Munitions"
+            className="relative flex items-center justify-center w-13 h-13 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full aspect-square bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 border-2 border-amber-200/90 shadow-[0_10px_35px_rgba(245,158,11,0.7),0_0_20px_rgba(251,191,36,0.5)] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer shrink-0 group"
+          >
+            <div className="absolute inset-0 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors" />
+            <Hammer className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 text-zinc-950 group-hover:rotate-12 transition-transform duration-200 drop-shadow" />
+          </button>
+        </div>
       </div>
 
-      {/* FULL PAGE NOTIFICATIONS PAGE: Emerges when clicking news floating tab, divided into categories */}
+      {/* FULL PAGE NOTIFICATIONS PAGE: Emerges when clicking news bell button */}
       {isNotificationsPageOpen && (
         <NotificationsModal
           initialCategory={selectedNotificationCategory}
@@ -745,12 +968,54 @@ export default function App() {
         />
       )}
 
-      {/* STRATEGIC CITIES MODAL: Emerges when clicking CITIES button */}
+      {/* STRATEGIC CITIES MODAL: Emerges when clicking CITIES button (Only your country or occupied cities viewable) */}
       {isCitiesModalOpen && (
         <CitiesModal
+          userCountry={selectedCountry}
+          occupiedCityIds={occupiedCityIds}
+          onToggleOccupyCity={handleToggleOccupyCity}
           onClose={() => setIsCitiesModalOpen(false)}
           onFlyToCity={handleFlyToCity}
           onShowComingSoon={showComingSoon}
+        />
+      )}
+
+      {/* FULL PAGE CONSTRUCT MODAL: Emerges when clicking Hammer button (Top notch "Construct" + left hamburger menu) */}
+      {isConstructOpen && (
+        <ConstructModal
+          money={money}
+          onDeductMoney={handleDeductMoney}
+          onAddNotification={handleAddNotification}
+          onClose={() => setIsConstructOpen(false)}
+        />
+      )}
+
+      {/* FULL PAGE MILITARY COMMAND MODAL: Top nav notch for base, intel, activity, units, stats, programs */}
+      {isMilitaryOpen && (
+        <MilitaryModal
+          userCountry={selectedCountry}
+          money={money}
+          aiAgents={aiAgents}
+          onDeductMoney={handleDeductMoney}
+          onAddNotification={handleAddNotification}
+          onFlyToBase={(lat, lng, zoom) => {
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.flyTo([lat, lng], zoom || 8, { duration: 1.5 });
+            }
+          }}
+          onClose={() => setIsMilitaryOpen(false)}
+        />
+      )}
+
+      {/* INITIAL GAME SETUP MODAL: Input country, User ID, World ID on first load */}
+      {isGameInitModalOpen && (
+        <GameInitModal
+          initialCountry={selectedCountry}
+          initialUserId={userId}
+          initialWorldId={worldId}
+          canCancel={isGameInitialized}
+          onCancel={() => setIsGameInitModalOpen(false)}
+          onInitializeGame={handleInitializeGame}
         />
       )}
 
@@ -758,6 +1023,9 @@ export default function App() {
       {isUserInfoOpen && (
         <UserInfoModal
           country={selectedCountry}
+          userId={userId}
+          worldId={worldId}
+          onOpenGameSetup={() => setIsGameInitModalOpen(true)}
           onSelectCountry={handleSelectCountry}
           onClose={() => setIsUserInfoOpen(false)}
           onShowComingSoon={showComingSoon}
@@ -773,8 +1041,17 @@ export default function App() {
         />
       )}
 
-      {/* 3-SECOND HEAVY GRAPHICS SPLASH SCREEN WITH MOVING MILITARY & ECONOMIC VALUE ANIMATIONS */}
-      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      {/* 5-SECOND HEAVY GRAPHICS SPLASH SCREEN WITH MOVING MILITARY & ECONOMIC VALUE ANIMATIONS */}
+      {showSplash && (
+        <SplashScreen
+          onComplete={() => {
+            setShowSplash(false);
+            if (!isGameInitialized) {
+              setIsGameInitModalOpen(true);
+            }
+          }}
+        />
+      )}
     </main>
   );
 }

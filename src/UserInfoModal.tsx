@@ -21,14 +21,20 @@ import { COUNTRY_PROFILES } from './countryProfiles';
 
 interface UserInfoModalProps {
   country: CountryFlag;
+  userId?: string;
+  worldId?: string;
   onSelectCountry: (country: CountryFlag) => void;
+  onOpenGameSetup?: () => void;
   onClose: () => void;
   onShowComingSoon: (message: string) => void;
 }
 
 export default function UserInfoModal({
   country,
+  userId,
+  worldId,
   onSelectCountry,
+  onOpenGameSetup,
   onClose,
   onShowComingSoon,
 }: UserInfoModalProps) {
@@ -37,7 +43,7 @@ export default function UserInfoModal({
     'user-info' | 'settings' | 'about-game' | 'about-us' | 'credits' | 'privacy-policy'
   >('user-info');
 
-  const profile = COUNTRY_PROFILES[country.code] || {
+  const defaultProfile = COUNTRY_PROFILES[country.code] || {
     code: country.code,
     name: country.name,
     flagUrl: country.flagUrl,
@@ -48,6 +54,12 @@ export default function UserInfoModal({
     rankTier: 'Tier 1 Sovereign Power',
     militaryBudget: '$50 Billion',
     activePersonnel: '250,000',
+  };
+
+  const profile = {
+    ...defaultProfile,
+    worldId: worldId || defaultProfile.worldId,
+    nationId: userId || defaultProfile.nationId,
   };
 
   return (
@@ -235,24 +247,38 @@ export default function UserInfoModal({
         </nav>
 
         {/* Switch Country Fast Trigger */}
-        <div className="p-3 border-t border-zinc-800 bg-zinc-950/50">
-          <label className="text-[10px] font-mono uppercase text-zinc-500 block mb-1.5">
-            Switch Player Nation
-          </label>
-          <select
-            value={country.code}
-            onChange={(e) => {
-              const next = COUNTRIES.find((c) => c.code === e.target.value);
-              if (next) onSelectCountry(next);
-            }}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-red-500"
-          >
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name} ({c.code})
-              </option>
-            ))}
-          </select>
+        <div className="p-3 border-t border-zinc-800 bg-zinc-950/50 space-y-2">
+          <div>
+            <label className="text-[10px] font-mono uppercase text-zinc-500 block mb-1.5">
+              Switch Player Nation
+            </label>
+            <select
+              value={country.code}
+              onChange={(e) => {
+                const next = COUNTRIES.find((c) => c.code === e.target.value);
+                if (next) onSelectCountry(next);
+              }}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-red-500"
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name} ({c.code})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {onOpenGameSetup && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenGameSetup();
+              }}
+              className="w-full py-1.5 px-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 font-mono text-[11px] font-bold uppercase transition-colors cursor-pointer"
+            >
+              Reconfigure User & World ID
+            </button>
+          )}
         </div>
       </aside>
 

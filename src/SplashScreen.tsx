@@ -27,7 +27,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   useEffect(() => {
     const startTime = Date.now();
-    const duration = 5000; // 5 seconds strictly as requested
+    const duration = 3000; // 3 seconds strictly as requested by user
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -50,7 +50,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           onComplete();
         }, 300); // smooth transition when reaching 100%
       }
-    }, 30);
+    }, 25);
 
     return () => clearInterval(interval);
   }, [onComplete]);
@@ -247,7 +247,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
         {/* Tiny footer label */}
         <div className="text-center text-[9px] sm:text-[10px] font-mono text-zinc-400 tracking-wider">
-          PLANETARY THEATER PRELOAD • READY FOR COMMAND IN 5 SECONDS
+          PLANETARY THEATER PRELOAD • READY FOR COMMAND IN 3 SECONDS
         </div>
       </div>
     </div>
